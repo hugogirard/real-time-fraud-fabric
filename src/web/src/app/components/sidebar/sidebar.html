@@ -4,32 +4,61 @@
     <div class="sidebar-header">
         <div class="sidebar-brand">
             <div class="sidebar-brand-icon">
-                <img src="images/shield-brand.svg" alt="Shield icon" />
+                <img src="images/shield.svg" alt="Shield icon" />
             </div>
             <span>Contoso Bank</span>
         </div>
-        <button id="new-chat-btn" class="btn btn-primary sidebar-new-btn" title="New conversation">
+        <!-- <button id="new-chat-btn" class="btn btn-primary sidebar-new-btn" title="New conversation">
             <img src="images/new-chat-icon.svg" alt="New chat icon" />
             New
-        </button>
+        </button> -->
     </div>
 
     <!-- Session List (Angular: *ngFor="let session of sessions") -->
     <div id="session-list" class="sidebar-sessions">
         <!-- Loading state -->
+        @if (loadingSession)
+        {
         <div id="sidebar-loading" class="sidebar-loading">
             <span class="spinner"></span>
             Loading sessions…
         </div>
+        }
 
         <!-- Empty state -->
+        @if (!loadingSession && sessions.length == 0) {
         <div id="sidebar-empty" class="sidebar-empty hidden">
             <img src="images/chat-empty.svg" alt="Empty chat icon" />
             <p>No fraud alert sessions yet.</p>
         </div>
+        }
 
-        <!-- Session items injected here by JS -->
-        <div id="session-items"></div>
+        @if (!loadingSession && sessions.length > 0) {
+        <div id="session-items">
+            @for (session of sessions; track session.id) {
+            <div class="sidebar-session-item" [class.active]="!session.resolved">
+                <div class="sidebar-session-icon" [class.status-active]="!session.resolved"
+                    [class.status-resolved]="session.resolved">
+                    @if (!session.resolved) {
+                    <span>&#10071;</span>
+                    } @else {
+                    <span>&#10004;</span>
+                    }
+                </div>
+                <div class="sidebar-session-content">
+                    <div class="sidebar-session-title">{{ session.title }}</div>
+                    <div class="sidebar-session-meta">
+                        <span>{{ session.created }}</span>
+                        <span class="badge" [class.badge-active]="!session.resolved"
+                            [class.badge-resolved]="session.resolved">
+                            {{ session.resolved ? 'resolved' : 'active' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        }
     </div>
 
     <!-- Sidebar Footer – User info (Angular: <app-user-profile>) -->
@@ -39,7 +68,7 @@
             <div id="user-name" class="sidebar-user-name"></div>
             <div id="user-card" class="sidebar-user-card"></div>
         </div>
-        <button id="logout-btn" class="btn btn-default sidebar-logout-btn" title="Sign out">
+        <button id="logout-btn" class="btn btn-default sidebar-logout-btn" title="Sign out" (click)="logout()">
             <img src="images/logout-icon.svg" alt="Sign out icon" />
             <span>Sign out</span>
         </button>
