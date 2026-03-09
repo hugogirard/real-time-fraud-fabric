@@ -1,0 +1,47 @@
+<aside id="sidebar" class="sidebar">
+
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <img src="images/shield-brand.svg" alt="Shield icon" />
+            </div>
+            <span>Contoso Bank</span>
+        </div>
+        <button id="new-chat-btn" class="btn btn-primary sidebar-new-btn" title="New conversation">
+            <img src="images/new-chat-icon.svg" alt="New chat icon" />
+            New
+        </button>
+    </div>
+
+    <!-- Session List (Angular: *ngFor="let session of sessions") -->
+    <div id="session-list" class="sidebar-sessions">
+        <!-- Loading state -->
+        <div id="sidebar-loading" class="sidebar-loading">
+            <span class="spinner"></span>
+            Loading sessions…
+        </div>
+
+        <!-- Empty state -->
+        <div id="sidebar-empty" class="sidebar-empty hidden">
+            <img src="images/chat-empty.svg" alt="Empty chat icon" />
+            <p>No fraud alert sessions yet.</p>
+        </div>
+
+        <!-- Session items injected here by JS -->
+        <div id="session-items"></div>
+    </div>
+
+    <!-- Sidebar Footer – User info (Angular: <app-user-profile>) -->
+    <div id="sidebar-footer" class="sidebar-footer">
+        <div id="user-avatar" class="sidebar-avatar"></div>
+        <div class="sidebar-user-info">
+            <div id="user-name" class="sidebar-user-name"></div>
+            <div id="user-card" class="sidebar-user-card"></div>
+        </div>
+        <button id="logout-btn" class="btn btn-default sidebar-logout-btn" title="Sign out">
+            <img src="images/logout-icon.svg" alt="Sign out icon" />
+            <span>Sign out</span>
+        </button>
+    </div>
+</aside>

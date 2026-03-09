@@ -1,0 +1,9 @@
+/* ============================================
+   Contoso Bank – Fraud / Chat Page Layout
+   ============================================ */
+
+.chat-page {
+    display: flex;
+    height: 100vh;
+    background: var(--neutral-gray-20);
+}

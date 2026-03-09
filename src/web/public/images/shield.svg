@@ -1,0 +1,12 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <!-- Outer shield border -->
+    <path d="M32 3L7 14v16c0 15.5 10.5 29 25 34 14.5-5 25-18.5 25-34V14L32 3z" fill="#ffffff" />
+    <!-- Inner shield dark layer -->
+    <path d="M32 7L10 17v13c0 13.5 9 25.5 22 30 13-4.5 22-16.5 22-30V17L32 7z" fill="#005A9E" />
+    <!-- Inner shield fill -->
+    <path d="M32 10L13 19v11c0 11.8 7.8 22.2 19 26 11.2-3.8 19-14.2 19-26V19L32 10z" fill="#0078D4" />
+    <!-- Cross: vertical bar (taller) -->
+    <rect x="29" y="20" width="6" height="26" rx="1" fill="#ffffff" />
+    <!-- Cross: horizontal bar (shorter, higher up) -->
+    <rect x="22" y="27" width="20" height="6" rx="1" fill="#ffffff" />
+</svg>

@@ -1,0 +1,38 @@
+<div id="login-page" class="login-page">
+    <div class="login-card">
+
+        <!-- Brand -->
+        <div class="login-brand">
+            <div class="login-brand-icon">
+                <img src="images/shield.svg" alt="Shield icon" />
+            </div>
+            <div class="login-brand-text">
+                <h1>Contoso Bank</h1>
+                <p>Fraud Alert Assistant</p>
+            </div>
+        </div>
+
+        <!-- Entra ID Login (Angular: MSAL redirect) -->
+        <div class="login-form">
+            <p class="login-subtitle">Sign in to access your fraud alert notifications and chat with our AI
+                assistant.</p>
+
+            <!-- Error banner -->
+            <div id="login-error" class="login-error" role="alert">
+                <img src="images/error-icon.svg" alt="Error icon" />
+                <span id="login-error-text"></span>
+            </div>
+
+            <button id="login-btn" class="btn login-entra-btn" type="button" (click)="login()">
+                <img class="login-entra-icon" src="images/microsoft-logo.svg" alt="Microsoft logo" />
+                <span id="login-btn-text">Sign in with Microsoft</span>
+                <span class="spinner login-spinner" id="login-spinner"></span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="login-footer">
+            <p>Protected by Microsoft Entra ID</p>
+        </div>
+    </div>
+</div>
