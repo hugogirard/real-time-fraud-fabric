@@ -1,0 +1,207 @@
+/* ============================================
+   Contoso Bank – Login Component Styles
+   Angular component: app-login
+   ============================================ */
+
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 50%, #2b88d8 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative background shapes */
+.login-page::before {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 50%;
+    top: -200px;
+    right: -100px;
+}
+
+.login-page::after {
+    content: "";
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 50%;
+    bottom: -150px;
+    left: -100px;
+}
+
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: var(--neutral-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-64);
+    width: 100%;
+    max-width: 420px;
+    padding: 40px 36px;
+    margin: var(--spacing-l);
+}
+
+.login-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-m);
+    margin-bottom: var(--spacing-xxxl);
+}
+
+.login-brand-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--brand-primary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-brand-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--neutral-white);
+}
+
+.login-brand-text h1 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--neutral-gray-130);
+    line-height: 1.2;
+}
+
+.login-brand-text p {
+    font-size: var(--font-size-sm);
+    color: var(--neutral-gray-60);
+    margin-top: 2px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.login-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-field .input-field {
+    min-height: 40px;
+    font-size: var(--font-size-base);
+}
+
+.login-subtitle {
+    font-size: var(--font-size-base);
+    color: var(--neutral-gray-80);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-l);
+}
+
+.login-entra-btn {
+    width: 100%;
+    min-height: 44px;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    background: var(--neutral-white);
+    color: var(--neutral-gray-100);
+    border: 1px solid var(--neutral-gray-40);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-m);
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-entra-btn:hover {
+    background: var(--neutral-gray-10);
+    border-color: var(--neutral-gray-80);
+    box-shadow: var(--shadow-4);
+}
+
+.login-entra-btn:active {
+    background: var(--neutral-gray-20);
+}
+
+.login-entra-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.login-error {
+    display: none;
+    align-items: center;
+    gap: var(--spacing-s);
+    background: #fde7e8;
+    color: var(--color-danger);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-s) var(--spacing-m);
+    border-radius: var(--radius-md);
+    border: 1px solid #f1c0c2;
+}
+
+.login-error.visible {
+    display: flex;
+}
+
+.login-error svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    fill: var(--color-danger);
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: var(--spacing-xxl);
+    font-size: var(--font-size-sm);
+    color: var(--neutral-gray-60);
+}
+
+.login-footer a {
+    color: var(--brand-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.login-spinner {
+    display: none;
+}
+
+.login-spinner.visible {
+    display: inline-block;
+}
+
+/* Demo credentials hint */
+.login-demo-hint {
+    background: var(--neutral-gray-10);
+    border: 1px solid var(--neutral-gray-30);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-m);
+    margin-top: var(--spacing-xl);
+    font-size: var(--font-size-sm);
+    color: var(--neutral-gray-80);
+}
+
+.login-demo-hint strong {
+    color: var(--neutral-gray-100);
+}
+
+.login-demo-hint code {
+    background: var(--neutral-gray-20);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: var(--font-size-sm);
+}

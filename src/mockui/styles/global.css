@@ -1,0 +1,292 @@
+/* ============================================
+   Contoso Bank – Global / Shared Styles
+   Fluent UI–inspired design tokens & resets
+   ============================================ */
+
+/* --- Fluent Design Tokens --- */
+:root {
+    /* Brand */
+    --brand-primary: #0078d4;
+    --brand-primary-hover: #106ebe;
+    --brand-primary-active: #005a9e;
+    --brand-dark: #003966;
+    --brand-light: #deecf9;
+
+    /* Neutrals */
+    --neutral-white: #ffffff;
+    --neutral-gray-10: #faf9f8;
+    --neutral-gray-20: #f3f2f1;
+    --neutral-gray-30: #edebe9;
+    --neutral-gray-40: #d2d0ce;
+    --neutral-gray-60: #a19f9d;
+    --neutral-gray-80: #605e5c;
+    --neutral-gray-100: #323130;
+    --neutral-gray-130: #201f1e;
+    --neutral-black: #000000;
+
+    /* Semantic */
+    --color-success: #107c10;
+    --color-warning: #ffb900;
+    --color-danger: #d13438;
+    --color-info: #0078d4;
+
+    /* Typography */
+    --font-family: "Segoe UI", "Segoe UI Web", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    --font-size-xs: 10px;
+    --font-size-sm: 12px;
+    --font-size-base: 14px;
+    --font-size-md: 16px;
+    --font-size-lg: 20px;
+    --font-size-xl: 24px;
+    --font-size-xxl: 28px;
+    --font-weight-regular: 400;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* Spacing */
+    --spacing-xxs: 2px;
+    --spacing-xs: 4px;
+    --spacing-s: 8px;
+    --spacing-m: 12px;
+    --spacing-l: 16px;
+    --spacing-xl: 20px;
+    --spacing-xxl: 24px;
+    --spacing-xxxl: 32px;
+
+    /* Elevation (Fluent shadows) */
+    --shadow-4: 0 1.6px 3.6px rgba(0, 0, 0, .132), 0 0.3px 0.9px rgba(0, 0, 0, .108);
+    --shadow-8: 0 3.2px 7.2px rgba(0, 0, 0, .132), 0 0.6px 1.8px rgba(0, 0, 0, .108);
+    --shadow-16: 0 6.4px 14.4px rgba(0, 0, 0, .132), 0 1.2px 3.6px rgba(0, 0, 0, .108);
+    --shadow-64: 0 25.6px 57.6px rgba(0, 0, 0, .22), 0 4.8px 14.4px rgba(0, 0, 0, .18);
+
+    /* Border radius */
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-round: 50%;
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--neutral-gray-100);
+    background: var(--neutral-gray-20);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: var(--brand-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- Fluent Button Base --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-s);
+    padding: var(--spacing-s) var(--spacing-l);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+    min-height: 32px;
+    line-height: 1;
+    outline: none;
+}
+
+.btn:focus-visible {
+    box-shadow: 0 0 0 2px var(--neutral-white), 0 0 0 4px var(--brand-primary);
+}
+
+.btn-primary {
+    background: var(--brand-primary);
+    color: var(--neutral-white);
+    border-color: var(--brand-primary);
+}
+
+.btn-primary:hover {
+    background: var(--brand-primary-hover);
+    border-color: var(--brand-primary-hover);
+}
+
+.btn-primary:active {
+    background: var(--brand-primary-active);
+    border-color: var(--brand-primary-active);
+}
+
+.btn-primary:disabled {
+    background: var(--neutral-gray-40);
+    border-color: var(--neutral-gray-40);
+    color: var(--neutral-gray-60);
+    cursor: not-allowed;
+}
+
+.btn-default {
+    background: var(--neutral-white);
+    color: var(--neutral-gray-100);
+    border-color: var(--neutral-gray-40);
+}
+
+.btn-default:hover {
+    background: var(--neutral-gray-20);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    padding: var(--spacing-s);
+    color: var(--neutral-gray-80);
+    border-radius: var(--radius-md);
+}
+
+.btn-icon:hover {
+    background: var(--neutral-gray-30);
+    color: var(--neutral-gray-100);
+}
+
+/* --- Fluent Input --- */
+.input-field {
+    width: 100%;
+    padding: var(--spacing-s) var(--spacing-m);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    border: 1px solid var(--neutral-gray-40);
+    border-radius: var(--radius-md);
+    background: var(--neutral-white);
+    color: var(--neutral-gray-100);
+    outline: none;
+    min-height: 32px;
+    transition: border-color 0.1s ease;
+}
+
+.input-field:hover {
+    border-color: var(--neutral-gray-80);
+}
+
+.input-field:focus {
+    border-color: var(--brand-primary);
+    border-bottom: 2px solid var(--brand-primary);
+}
+
+.input-field::placeholder {
+    color: var(--neutral-gray-60);
+}
+
+/* --- Fluent Label --- */
+.field-label {
+    display: block;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-xs);
+    color: var(--neutral-gray-100);
+}
+
+/* --- Utilities --- */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-sm {
+    font-size: var(--font-size-sm);
+}
+
+.text-muted {
+    color: var(--neutral-gray-60);
+}
+
+.mt-s {
+    margin-top: var(--spacing-s);
+}
+
+.mt-m {
+    margin-top: var(--spacing-m);
+}
+
+.mt-l {
+    margin-top: var(--spacing-l);
+}
+
+.mb-s {
+    margin-bottom: var(--spacing-s);
+}
+
+.mb-m {
+    margin-bottom: var(--spacing-m);
+}
+
+.mb-l {
+    margin-bottom: var(--spacing-l);
+}
+
+/* --- Status badges --- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    border-radius: 9999px;
+}
+
+.badge-active {
+    background: #fde7e8;
+    color: var(--color-danger);
+}
+
+.badge-resolved {
+    background: #dff6dd;
+    color: var(--color-success);
+}
+
+/* --- Spinner --- */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--neutral-gray-30);
+    border-top-color: var(--brand-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- Page container --- */
+#app {
+    height: 100%;
+}
+
+/* --- Hidden utility --- */
+.hidden {
+    display: none !important;
+}
