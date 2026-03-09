@@ -70,13 +70,24 @@ module chatCompletionModelDeployment 'core/AI/model-deployment.bicep' = {
 
 // End AI Resources
 
+// Data resources
+module fabric 'core/data/fabric.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    administrationMember: administrationMember
+    fabricResourceName: 'fabric${resourceToken}'
+  }
+}
+
 // Workload hosting (backend and frontend)
 module serverFarm 'core/web/webapp.bicep' = {
   scope: rg
   params: {
     location: location
     appServicePlanResourceName: '${abbrs.webServerFarms}${resourceToken}'
-    agentWebAppName: '${abbrs.webServerFarms}${resourceToken}'
+    agentWebAppName: 'agent-${resourceToken}'
+    frontEndWebAppName: 'web-${resourceToken}'
   }
 }
 
