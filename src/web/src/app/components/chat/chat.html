@@ -3,7 +3,7 @@
     <!-- Chat Header -->
     <div id="chat-header" class="chat-header">
         <div class="chat-header-title">
-            <h2 id="chat-title">{{ session ? session.title : 'Select a conversation' }}</h2>
+            <h2 id="chat-title">{{ session() ? session()!.title : 'Select a conversation' }}</h2>
             <span id="chat-status-badge"></span>
         </div>
         <div class="chat-header-actions">
@@ -15,7 +15,7 @@
     <div id="chat-messages" class="chat-messages">
 
         <!-- Welcome / empty state -->
-        @if (!session) {
+        @if (!session()) {
         <div id="chat-welcome" class="chat-welcome">
             <div class="chat-welcome-icon">
                 <img src="images/shield-welcome.svg" alt="Shield icon" />
@@ -27,9 +27,9 @@
         }
 
         <!-- Message list -->
-        @if (session) {
+        @if (session()) {
         <div id="message-list">
-            @for (msg of messages; track msg.id) {
+            @for (msg of messages(); track msg.id) {
             <div class="message" [class.bot]="msg.role === Role.Assistant" [class.user]="msg.role === Role.User">
                 <div class="message-avatar">{{ msg.role === Role.Assistant ? 'CB' : 'JD' }}</div>
                 <div class="message-content">

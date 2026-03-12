@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from "@angular/core";
+import { Component, output, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { SessionService } from "../../services/session.service";
 import { Session } from "../../model/session";
@@ -15,13 +15,13 @@ import { SessionComponent } from "../session/session";
 })
 export class SideBar {
 
-    loadingSession: boolean = true;
-    sessions: Array<Session> = [];
-    activeSessions: Array<Session> = [];
-    resolvedSessions: Array<Session> = [];
-    selectedSession?: Session;
+    loadingSession = signal(true);
+    sessions = signal<Session[]>([]);
+    activeSessions = signal<Session[]>([]);
+    resolvedSessions = signal<Session[]>([]);
+    selectedSession = signal<Session | undefined>(undefined);
 
-    @Output() sessionSelected = new EventEmitter<Session>();
+    sessionSelected = output<Session>();
 
     constructor(private router: Router, private sessionService: SessionService, private stateService: StateService) { }
 
@@ -35,19 +35,26 @@ export class SideBar {
     }
 
     selectSession(session: Session) {
-        if (this.selectedSession?.id == session.id || this.selectedSession || this.stateService.modelIsAnswering)
+        if (this.selectedSession()?.id == session.id || this.stateService.modelIsAnswering())
             return;
 
-        this.selectedSession = session;
+        this.selectedSession.set(session);
         this.sessionSelected.emit(session);
     }
 
     getSessions() {
         this.sessionService.getSessions().subscribe(sessions => {
-            this.loadingSession = false;
-            this.sessions = sessions;
-            this.activeSessions = sessions.filter(s => !s.resolved);
-            this.resolvedSessions = sessions.filter(s => s.resolved);
+            this.loadingSession.set(false);
+            this.sessions.set(sessions);
+            this.activeSessions.set(sessions.filter(s => !s.resolved));
+            this.resolvedSessions.set(sessions.filter(s => s.resolved));
+
+            if (sessions.length > 0) {
+                const active = sessions.filter(s => !s.resolved);
+                const resolved = sessions.filter(s => s.resolved);
+                const firstSession = active.length > 0 ? active[0] : resolved[0];
+                this.selectSession(firstSession);
+            }
         });
     }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges } from "@angular/core";
+import { Component, input, signal, effect } from "@angular/core";
 import { DatePipe } from "@angular/common";
 import { FraudService } from "../../services/fraud.service";
 import { Message, Role } from "../../model/message";
@@ -15,25 +15,18 @@ import { Session } from "../../model/session";
 })
 export class Chat {
 
-    @Input() session?: Session;
-    messages: Array<Message> = [];
+    session = input<Session>();
+    messages = signal<Message[]>([]);
     Role = Role;
 
-    constructor(private fraudService: FraudService) { }
-
-    ngOnInit() {
-
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes['session'] && this.session) {
-            this.loadMessages(this.session.id);
-        }
-    }
-
-    loadMessages(sessionId: string) {
-        this.fraudService.getMessages(sessionId).subscribe(messages => {
-            this.messages = messages;
+    constructor(private fraudService: FraudService) {
+        effect(() => {
+            const s = this.session();
+            if (s) {
+                this.fraudService.getMessages(s.id).subscribe(msgs => {
+                    this.messages.set(msgs);
+                });
+            }
         });
     }
 }

@@ -25,7 +25,7 @@
     <!-- Session List (Angular: *ngFor="let session of sessions") -->
     <div id="session-list" class="sidebar-sessions">
         <!-- Loading state -->
-        @if (loadingSession)
+        @if (loadingSession())
         {
         <div id="sidebar-loading" class="sidebar-loading">
             <span class="spinner"></span>
@@ -34,19 +34,19 @@
         }
 
         <!-- Empty state -->
-        @if (!loadingSession && sessions.length == 0) {
+        @if (!loadingSession() && sessions().length == 0) {
         <div id="sidebar-empty" class="sidebar-empty hidden">
             <img src="images/chat-empty.svg" alt="Empty chat icon" />
             <p>No fraud alert sessions yet.</p>
         </div>
         }
 
-        @if (!loadingSession && sessions.length > 0) {
+        @if (!loadingSession() && sessions().length > 0) {
         <div id="session-items">
-            @if (activeSessions.length > 0) {
+            @if (activeSessions().length > 0) {
             <div class="sidebar-section-label">Active Alerts</div>
-            @for (session of activeSessions; track session.id) {
-            <div class="sidebar-session-item active" [ngClass]="{'selected': selectedSession?.id === session.id}"
+            @for (session of activeSessions(); track session.id) {
+            <div class="sidebar-session-item active" [ngClass]="{'selected': selectedSession()?.id === session.id}"
                 (click)="selectSession(session)">
                 <div class="sidebar-session-icon status-active">
                     <span>!</span>
@@ -63,10 +63,10 @@
             }
             }
 
-            @if (resolvedSessions.length > 0) {
+            @if (resolvedSessions().length > 0) {
             <div class="sidebar-section-label">Resolved</div>
-            @for (session of resolvedSessions; track session.id) {
-            <div class="sidebar-session-item" [ngClass]="{'selected': selectedSession?.id === session.id}"
+            @for (session of resolvedSessions(); track session.id) {
+            <div class="sidebar-session-item" [ngClass]="{'selected': selectedSession()?.id === session.id}"
                 (click)="selectSession(session)">
                 <div class="sidebar-session-icon status-resolved">
                     <span>✓</span>

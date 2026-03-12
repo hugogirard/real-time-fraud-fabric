@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, signal } from "@angular/core";
 import { SideBar } from "../../components/sidebar/sidebar";
 import { Chat } from "../../components/chat/chat";
 import { Session } from "../../model/session";
@@ -11,9 +11,9 @@ import { Session } from "../../model/session";
     imports: [SideBar, Chat]
 })
 export class FraudPage {
-    selectedSession?: Session;
+    selectedSession = signal<Session | undefined>(undefined);
 
     onSessionSelected(session: Session) {
-        this.selectedSession = session;
+        this.selectedSession.set(session);
     }
 }

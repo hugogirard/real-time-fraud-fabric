@@ -127,11 +127,6 @@
     background: var(--neutral-gray-10);
 }
 
-.sidebar-session-item.active {
-    background: var(--brand-light);
-    border-left-color: var(--brand-primary);
-}
-
 .sidebar-session-item.selected {
     background: var(--brand-light);
     border-left-color: var(--brand-primary);

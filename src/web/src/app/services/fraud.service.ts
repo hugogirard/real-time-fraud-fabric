@@ -41,6 +41,6 @@ export class FraudService {
             text: this.botResponses[this.responseIndex % this.botResponses.length],
             createdAt: new Date(Date.now() + 1500).toISOString()
         }
-        return of(message).pipe(delay(3000));
+        return of(message).pipe(delay(2000));
     }
 }

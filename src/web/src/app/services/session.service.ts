@@ -34,6 +34,6 @@ export class SessionService {
             }
         ];
 
-        return of(sessions);
+        return of(sessions).pipe(delay(3000));
     }
 }
