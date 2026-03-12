@@ -1,3 +1,11 @@
+<!-- Pure-CSS hamburger toggle (checkbox hack) -->
+<input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-checkbox" />
+<label for="sidebar-toggle" class="sidebar-hamburger" aria-label="Toggle sidebar">
+    <span></span>
+    <span></span>
+    <span></span>
+</label>
+
 <aside id="sidebar" class="sidebar">
 
     <!-- Sidebar Header -->
@@ -8,10 +16,10 @@
             </div>
             <span>Contoso Bank</span>
         </div>
-        <!-- <button id="new-chat-btn" class="btn btn-primary sidebar-new-btn" title="New conversation">
+        <button id="new-chat-btn" class="btn btn-primary sidebar-new-btn" title="New conversation">
             <img src="images/new-chat-icon.svg" alt="New chat icon" />
             New
-        </button> -->
+        </button>
     </div>
 
     <!-- Session List (Angular: *ngFor="let session of sessions") -->
@@ -35,27 +43,40 @@
 
         @if (!loadingSession && sessions.length > 0) {
         <div id="session-items">
-            @for (session of sessions; track session.id) {
-            <div class="sidebar-session-item" [class.active]="!session.resolved">
-                <div class="sidebar-session-icon" [class.status-active]="!session.resolved"
-                    [class.status-resolved]="session.resolved">
-                    @if (!session.resolved) {
+            @if (activeSessions.length > 0) {
+            <div class="sidebar-section-label">Active Alerts</div>
+            @for (session of activeSessions; track session.id) {
+            <div class="sidebar-session-item active" (click)="selectSession(session)">
+                <div class="sidebar-session-icon status-active">
                     <span>&#10071;</span>
-                    } @else {
-                    <span>&#10004;</span>
-                    }
                 </div>
                 <div class="sidebar-session-content">
                     <div class="sidebar-session-title">{{ session.title }}</div>
                     <div class="sidebar-session-meta">
                         <span>{{ session.created }}</span>
-                        <span class="badge" [class.badge-active]="!session.resolved"
-                            [class.badge-resolved]="session.resolved">
-                            {{ session.resolved ? 'resolved' : 'active' }}
-                        </span>
+                        <span class="badge badge-active">active</span>
                     </div>
                 </div>
             </div>
+            }
+            }
+
+            @if (resolvedSessions.length > 0) {
+            <div class="sidebar-section-label">Resolved</div>
+            @for (session of resolvedSessions; track session.id) {
+            <div class="sidebar-session-item" (click)="selectSession(session)">
+                <div class="sidebar-session-icon status-resolved">
+                    <span>&#10004;</span>
+                </div>
+                <div class="sidebar-session-content">
+                    <div class="sidebar-session-title">{{ session.title }}</div>
+                    <div class="sidebar-session-meta">
+                        <span>{{ session.created }}</span>
+                        <span class="badge badge-resolved">resolved</span>
+                    </div>
+                </div>
+            </div>
+            }
             }
         </div>
         }
@@ -63,10 +84,10 @@
 
     <!-- Sidebar Footer – User info (Angular: <app-user-profile>) -->
     <div id="sidebar-footer" class="sidebar-footer">
-        <div id="user-avatar" class="sidebar-avatar"></div>
+        <div id="user-avatar" class="sidebar-avatar">JD</div>
         <div class="sidebar-user-info">
-            <div id="user-name" class="sidebar-user-name"></div>
-            <div id="user-card" class="sidebar-user-card"></div>
+            <div id="user-name" class="sidebar-user-name">John Doe</div>
+            <div id="user-card" class="sidebar-user-card">Card &bull;&bull;&bull;&bull; 4921</div>
         </div>
         <button id="logout-btn" class="btn btn-default sidebar-logout-btn" title="Sign out" (click)="logout()">
             <img src="images/logout-icon.svg" alt="Sign out icon" />

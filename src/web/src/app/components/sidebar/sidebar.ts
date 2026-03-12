@@ -12,7 +12,9 @@ import { Session } from "../../model/session";
 export class SideBar {
 
     loadingSession: boolean = true;
-    sessions: Array<Session> = []
+    sessions: Array<Session> = [];
+    activeSessions: Array<Session> = [];
+    resolvedSessions: Array<Session> = [];
 
     constructor(private router: Router, private sessionService: SessionService) { }
 
@@ -25,10 +27,16 @@ export class SideBar {
         this.router.navigate(['/'])
     }
 
+    selectSession(session: Session) {
+        // TODO: implement conversation selection
+    }
+
     getSessions() {
         this.sessionService.getSessions().subscribe(sessions => {
             this.loadingSession = false;
             this.sessions = sessions;
+            this.activeSessions = sessions.filter(s => !s.resolved);
+            this.resolvedSessions = sessions.filter(s => s.resolved);
         });
     }
 }

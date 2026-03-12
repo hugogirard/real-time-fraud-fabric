@@ -1,0 +1,56 @@
+<main class="chat-main">
+
+    <!-- Chat Header -->
+    <div id="chat-header" class="chat-header">
+        <div class="chat-header-title">
+            <h2 id="chat-title">Select a conversation</h2>
+            <span id="chat-status-badge"></span>
+        </div>
+        <div class="chat-header-actions">
+            <!-- Placeholder for future actions -->
+        </div>
+    </div>
+
+    <!-- Messages (Angular: <app-message *ngFor="let msg of messages">) -->
+    <div id="chat-messages" class="chat-messages">
+
+        <!-- Welcome / empty state -->
+        <div id="chat-welcome" class="chat-welcome">
+            <div class="chat-welcome-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                </svg>
+            </div>
+            <h3>Fraud Alert Assistant</h3>
+            <p>Select an existing conversation from the sidebar or start a new one to get help with a fraud
+                alert on your account.</p>
+        </div>
+
+        <!-- Messages injected here by JS -->
+        <div id="message-list"></div>
+
+        <!-- Typing indicator -->
+        <div id="typing-indicator" class="typing-indicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+    </div>
+
+    <!-- Chat Input (Angular: <app-chat-input>) -->
+    <div id="chat-input-area" class="chat-input-area">
+        <div class="chat-input-wrapper">
+            <textarea id="chat-input" class="chat-input" rows="1" placeholder="Type your message…"
+                aria-label="Type your message"></textarea>
+            <button id="send-btn" class="chat-send-btn" title="Send message" disabled>
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+            </button>
+        </div>
+        <div class="chat-input-hint">
+            Contoso Bank Fraud Assistant – powered by AI
+        </div>
+    </div>
+
+</main>
