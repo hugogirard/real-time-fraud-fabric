@@ -323,6 +323,10 @@
         max-height: 40vh;
     }
 
+    .chat-header {
+        padding-left: 56px;
+    }
+
     .chat-messages {
         padding: var(--spacing-l);
     }

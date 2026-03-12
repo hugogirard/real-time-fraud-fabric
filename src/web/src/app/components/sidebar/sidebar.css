@@ -35,8 +35,6 @@
 .sidebar-brand-icon {
     width: 32px;
     height: 32px;
-    background: var(--brand-primary);
-    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,9 +42,8 @@
 }
 
 .sidebar-brand-icon img {
-    width: 20px;
-    height: 20px;
-    filter: brightness(0) invert(1);
+    width: 32px;
+    height: 32px;
 }
 
 .sidebar-brand span {
@@ -295,6 +292,11 @@
     /* Show hamburger button */
     .sidebar-hamburger {
         display: flex;
+    }
+
+    /* Push sidebar header content past the hamburger */
+    .sidebar-header {
+        padding-left: 52px;
     }
 
     /* Sidebar slides off-screen by default */
