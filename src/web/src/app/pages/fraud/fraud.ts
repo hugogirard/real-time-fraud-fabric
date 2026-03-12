@@ -1,6 +1,7 @@
 import { Component } from "@angular/core";
 import { SideBar } from "../../components/sidebar/sidebar";
 import { Chat } from "../../components/chat/chat";
+import { Session } from "../../model/session";
 
 @Component({
     selector: 'fraud',
@@ -10,5 +11,9 @@ import { Chat } from "../../components/chat/chat";
     imports: [SideBar, Chat]
 })
 export class FraudPage {
+    selectedSession?: Session;
 
+    onSessionSelected(session: Session) {
+        this.selectedSession = session;
+    }
 }

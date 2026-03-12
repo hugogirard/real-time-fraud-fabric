@@ -46,17 +46,19 @@
             @if (activeSessions.length > 0) {
             <div class="sidebar-section-label">Active Alerts</div>
             @for (session of activeSessions; track session.id) {
-            <div class="sidebar-session-item active" (click)="selectSession(session)">
+            <div class="sidebar-session-item active" [ngClass]="{'selected': selectedSession?.id === session.id}"
+                (click)="selectSession(session)">
                 <div class="sidebar-session-icon status-active">
-                    <span>&#10071;</span>
+                    <span>!</span>
                 </div>
-                <div class="sidebar-session-content">
+                <session-content [session]="session" />
+                <!-- <div class="sidebar-session-content">
                     <div class="sidebar-session-title">{{ session.title }}</div>
                     <div class="sidebar-session-meta">
                         <span>{{ session.created }}</span>
                         <span class="badge badge-active">active</span>
                     </div>
-                </div>
+                </div> -->
             </div>
             }
             }
@@ -64,17 +66,19 @@
             @if (resolvedSessions.length > 0) {
             <div class="sidebar-section-label">Resolved</div>
             @for (session of resolvedSessions; track session.id) {
-            <div class="sidebar-session-item" (click)="selectSession(session)">
+            <div class="sidebar-session-item" [ngClass]="{'selected': selectedSession?.id === session.id}"
+                (click)="selectSession(session)">
                 <div class="sidebar-session-icon status-resolved">
-                    <span>&#10004;</span>
+                    <span>✓</span>
                 </div>
-                <div class="sidebar-session-content">
+                <session-content [session]="session" />
+                <!-- <div class="sidebar-session-content">
                     <div class="sidebar-session-title">{{ session.title }}</div>
                     <div class="sidebar-session-meta">
                         <span>{{ session.created }}</span>
                         <span class="badge badge-resolved">resolved</span>
                     </div>
-                </div>
+                </div> -->
             </div>
             }
             }

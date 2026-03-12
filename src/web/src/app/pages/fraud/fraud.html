@@ -1,4 +1,4 @@
 <div id="chat-page" class="chat-page">
-    <sidebar />
-    <chat-pane />
+    <sidebar (sessionSelected)="onSessionSelected($event)" />
+    <chat-pane [session]="selectedSession" />
 </div>

@@ -132,6 +132,11 @@
     border-left-color: var(--brand-primary);
 }
 
+.sidebar-session-item.selected {
+    background: var(--brand-light);
+    border-left-color: var(--brand-primary);
+}
+
 .sidebar-session-icon {
     width: 28px;
     height: 28px;
@@ -141,16 +146,19 @@
     justify-content: center;
     flex-shrink: 0;
     margin-top: 2px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
 }
 
 .sidebar-session-icon.status-active {
-    background: #fde7e8;
-    color: var(--color-danger);
+    background: var(--color-danger);
+    color: var(--neutral-white);
 }
 
 .sidebar-session-icon.status-resolved {
-    background: #dff6dd;
-    color: var(--color-success);
+    background: var(--color-success);
+    color: var(--neutral-white);
 }
 
 .sidebar-session-icon img {

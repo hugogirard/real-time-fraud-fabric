@@ -3,7 +3,7 @@
     <!-- Chat Header -->
     <div id="chat-header" class="chat-header">
         <div class="chat-header-title">
-            <h2 id="chat-title">Select a conversation</h2>
+            <h2 id="chat-title">{{ session ? session.title : 'Select a conversation' }}</h2>
             <span id="chat-status-badge"></span>
         </div>
         <div class="chat-header-actions">
@@ -11,23 +11,35 @@
         </div>
     </div>
 
-    <!-- Messages (Angular: <app-message *ngFor="let msg of messages">) -->
+    <!-- Messages -->
     <div id="chat-messages" class="chat-messages">
 
         <!-- Welcome / empty state -->
+        @if (!session) {
         <div id="chat-welcome" class="chat-welcome">
             <div class="chat-welcome-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
-                </svg>
+                <img src="images/shield-welcome.svg" alt="Shield icon" />
             </div>
             <h3>Fraud Alert Assistant</h3>
             <p>Select an existing conversation from the sidebar or start a new one to get help with a fraud
                 alert on your account.</p>
         </div>
+        }
 
-        <!-- Messages injected here by JS -->
-        <div id="message-list"></div>
+        <!-- Message list -->
+        @if (session) {
+        <div id="message-list">
+            @for (msg of messages; track msg.id) {
+            <div class="message" [class.bot]="msg.role === Role.Assistant" [class.user]="msg.role === Role.User">
+                <div class="message-avatar">{{ msg.role === Role.Assistant ? 'CB' : 'JD' }}</div>
+                <div class="message-content">
+                    <div class="message-bubble">{{ msg.text }}</div>
+                    <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
+                </div>
+            </div>
+            }
+        </div>
+        }
 
         <!-- Typing indicator -->
         <div id="typing-indicator" class="typing-indicator">
@@ -37,15 +49,13 @@
         </div>
     </div>
 
-    <!-- Chat Input (Angular: <app-chat-input>) -->
+    <!-- Chat Input -->
     <div id="chat-input-area" class="chat-input-area">
         <div class="chat-input-wrapper">
             <textarea id="chat-input" class="chat-input" rows="1" placeholder="Type your message…"
                 aria-label="Type your message"></textarea>
             <button id="send-btn" class="chat-send-btn" title="Send message" disabled>
-                <svg viewBox="0 0 24 24">
-                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
+                <img src="images/send-icon.svg" alt="Send" />
             </button>
         </div>
         <div class="chat-input-hint">
