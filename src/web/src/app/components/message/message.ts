@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, input } from "@angular/core";
 import { Message } from "../../model/message";
 
 
@@ -10,6 +10,5 @@ import { Message } from "../../model/message";
 })
 export class MessageComponent {
 
-    @Input()
-    message: Message | null = null;
+    message = input<Message>();
 }

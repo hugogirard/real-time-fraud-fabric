@@ -1,4 +1,4 @@
-import { Component, input, signal, effect } from "@angular/core";
+import { Component, input, signal, effect, computed } from "@angular/core";
 import { DatePipe } from "@angular/common";
 import { FraudService } from "../../services/fraud.service";
 import { Message, Role } from "../../model/message";
