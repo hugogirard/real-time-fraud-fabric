@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Eventstream",
+    "displayName": "CreditCardTransactions_es"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a0d4d8c6-f08b-93e3-4c9b-49dceaa7017d"
+  }
+}
