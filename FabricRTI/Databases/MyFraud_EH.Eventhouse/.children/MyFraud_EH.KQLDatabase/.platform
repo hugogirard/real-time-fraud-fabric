@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "KQLDatabase",
+    "displayName": "MyFraud_EH",
+    "description": "MyFraud_EH"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "0447d5c0-a6cc-a5c7-4c02-3a074b4b5c3d"
+  }
+}

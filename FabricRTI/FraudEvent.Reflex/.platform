@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Reflex",
+    "displayName": "FraudEvent"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "29dc9224-98a6-9d93-4f3f-8c2c532a8550"
+  }
+}

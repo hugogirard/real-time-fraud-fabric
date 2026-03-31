@@ -1,0 +1,58 @@
+{
+  "sources": [
+    {
+      "id": "a080f025-a213-4408-be7c-1a5b486ea9cb",
+      "name": "CreditCardTransactions",
+      "type": "CustomEndpoint",
+      "properties": {}
+    }
+  ],
+  "destinations": [
+    {
+      "id": "080ed933-9337-437b-a4e0-8c97f6b3cfdc",
+      "name": "CCTransactions",
+      "type": "Eventhouse",
+      "properties": {
+        "dataIngestionMode": "ProcessedIngestion",
+        "workspaceId": "00000000-0000-0000-0000-000000000000",
+        "itemId": "0447d5c0-a6cc-a5c7-4c02-3a074b4b5c3d",
+        "databaseName": "MyFraud_EH",
+        "tableName": "CCTransactions",
+        "inputSerialization": {
+          "type": "Json",
+          "properties": {
+            "encoding": "UTF8"
+          }
+        }
+      },
+      "inputNodes": [
+        {
+          "name": "CreditCardTransactions_es-stream"
+        }
+      ],
+      "inputSchemas": [
+        {
+          "name": "CreditCardTransactions_es-stream",
+          "schema": {
+            "columns": []
+          }
+        }
+      ]
+    }
+  ],
+  "streams": [
+    {
+      "id": "8734d70d-15f1-4bac-be2a-766475b76583",
+      "name": "CreditCardTransactions_es-stream",
+      "type": "DefaultStream",
+      "properties": {},
+      "inputNodes": [
+        {
+          "name": "CreditCardTransactions"
+        }
+      ]
+    }
+  ],
+  "operators": [],
+  "compatibilityLevel": "1.1"
+}
