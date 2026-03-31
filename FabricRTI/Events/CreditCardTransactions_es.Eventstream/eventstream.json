@@ -38,6 +38,26 @@
           }
         }
       ]
+    },
+    {
+      "id": "d3deb8a7-b280-50cb-85cb-a894270cc890",
+      "name": "MJHhyyjkRSYjw4yMaqK5tM-532a8550-8c2c-4f3f-9d93-98a629dc9224",
+      "type": "Activator",
+      "properties": {
+        "workspaceId": "00000000-0000-0000-0000-000000000000",
+        "itemId": "29dc9224-98a6-9d93-4f3f-8c2c532a8550",
+        "inputSerialization": {
+          "type": "Json",
+          "properties": {
+            "encoding": "UTF8"
+          }
+        }
+      },
+      "inputNodes": [
+        {
+          "name": "CreditCardTransactions_es-stream"
+        }
+      ]
     }
   ],
   "streams": [
