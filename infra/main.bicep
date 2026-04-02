@@ -15,6 +15,9 @@ param resourceGroupName string
 @description('The email of the administrator for Fabric')
 param administrationMember string
 
+@description('The user principal ID')
+param userPrincipalId string
+
 var abbrs = loadJsonContent('./abbreviations.json')
 
 var tags = {
@@ -65,6 +68,15 @@ module chatCompletionModelDeployment 'core/AI/model-deployment.bicep' = {
     modelProperties: chatCompletionModel
     skuCapacity: chatCompletionModelSkuCapacity
     versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+  }
+}
+
+module rbac_ai_owner 'rbac/rbac.bicep' = {
+  scope: rg
+  params: {
+    principalId: userPrincipalId
+    resourceId: foundry.outputs.foundryResourceId
+    roleName: 'c883944f-8b7b-4483-af10-35834be79c4a' // Azure AI Owner 
   }
 }
 

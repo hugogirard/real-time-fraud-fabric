@@ -46,3 +46,4 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-previ
 output resourceName string = account.name
 output projectResourceName string = project.name
 output projectEndpoint string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'
+output foundryResourceId string = account.id

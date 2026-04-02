@@ -13,6 +13,9 @@
     },
     "administrationMember": {
       "value": "${AZURE_ADMINISTRATION_MEMBER}"
+    },
+    "userPrincipalId": {
+      "value": "${USER_PRINCIPAL_ID}"
     }
   }
 }
