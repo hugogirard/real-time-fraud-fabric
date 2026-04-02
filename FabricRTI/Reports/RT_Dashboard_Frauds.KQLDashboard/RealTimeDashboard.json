@@ -1,0 +1,100 @@
+{
+  "schema_version": 69,
+  "tiles": [
+    {
+      "id": "05a3e15f-94cb-43c1-849f-bf2956c79be5",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "bdc6e8e1-e67b-479c-883e-6d17a06c3b3a"
+      },
+      "title": "CCTransactions Table Preview",
+      "visualType": "bar",
+      "pageId": "1fa16453-3be7-4c24-a739-e1e623973ff4",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 22,
+        "height": 13
+      },
+      "visualOptions": {
+        "multipleYAxes": {
+          "additional": [],
+          "showMultiplePanels": false,
+          "base": {
+            "horizontalLines": [],
+            "yAxisScale": "linear",
+            "yAxisMaximumValue": null,
+            "yAxisMinimumValue": null,
+            "columns": [],
+            "label": "Fraud Ratio",
+            "id": "-1"
+          }
+        },
+        "seriesColors": {},
+        "hideLegend": true,
+        "legendLocation": "bottom",
+        "xColumnTitle": "User Name",
+        "xColumn": null,
+        "yColumns": null,
+        "seriesColumns": null,
+        "verticalLine": "",
+        "crossFilter": [],
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "forceAxisTicks": false,
+        "drillthrough": [],
+        "selectedDataOnLoad": {
+          "all": true,
+          "limit": 10
+        }
+      }
+    }
+  ],
+  "baseQueries": [],
+  "parameters": [
+    {
+      "kind": "duration",
+      "id": "b3a7f03b-2f93-4195-9475-a2726b8ab1df",
+      "displayName": "Time range",
+      "description": "",
+      "beginVariableName": "_startTime",
+      "endVariableName": "_endTime",
+      "defaultValue": {
+        "kind": "dynamic",
+        "count": 1,
+        "unit": "hours"
+      },
+      "showOnPages": {
+        "kind": "all"
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "kind": "kusto-trident",
+      "id": "5b3c72af-611e-446e-9660-b852e9ab0cdf",
+      "name": "MyFraud_EH",
+      "clusterUri": "",
+      "database": "0447d5c0-a6cc-a5c7-4c02-3a074b4b5c3d",
+      "workspace": "00000000-0000-0000-0000-000000000000",
+      "scopeId": "kusto-trident"
+    }
+  ],
+  "pages": [
+    {
+      "name": "Page 1",
+      "id": "1fa16453-3be7-4c24-a739-e1e623973ff4"
+    }
+  ],
+  "queries": [
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "5b3c72af-611e-446e-9660-b852e9ab0cdf"
+      },
+      "text": "CCTransactions\r\n| join kind=inner (Customers | project user_id, display_name) on user_id\r\n| summarize totalTransactions=count(), fraudTransactions=countif(is_fraud == \"1\"), fraudRatio=toreal(countif(is_fraud == \"1\"))/count(), fraudReasons=make_set(fraud_type, 100) by display_name\r\n| project display_name, fraudRatio, fraudReasons\r\n| render barchart with (\r\n    title=\"Fraud Transaction Ratio by User Name\",\r\n    ytitle=\"Fraud Ratio\",\r\n    xtitle=\"User Name\",\r\n    legend=hidden\r\n)",
+      "id": "bdc6e8e1-e67b-479c-883e-6d17a06c3b3a",
+      "usedVariables": []
+    }
+  ]
+}

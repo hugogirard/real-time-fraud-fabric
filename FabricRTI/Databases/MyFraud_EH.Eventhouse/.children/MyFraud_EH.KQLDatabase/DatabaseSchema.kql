@@ -2,4 +2,5 @@
 // Use management commands in this script to configure your database items, such as tables, functions, materialized views, and more.
 
 
+.create-merge table Customers (user_id:string, first_name:string, last_name:string, display_name:string, user_principal_name:string, email:string, age:int, gender:string, street_address:string, home_city:string, home_state:string, postal_code:string, country_code:string, country:string, home_lat:real, home_lon:real, credit_limit:real, account_created:datetime) 
 .create-merge table CCTransactions (transaction_id:string, user_id:string, stream_timestamp:string, amount:real, merchant_name:string, merchant_category:string, merchant_city:string, merchant_state:string, merchant_lat:real, merchant_lon:real, is_fraud:string, fraud_type:string, distance_from_home_km:real, hour_of_day:string, day_of_week:string, time_since_last_txn_sec:real, rolling_avg_amount:real, amount_zscore:real, txn_count_last_1h:string, txn_count_last_24h:string, EventProcessedUtcTime:datetime, PartitionId:long, EventEnqueuedUtcTime:datetime) 
