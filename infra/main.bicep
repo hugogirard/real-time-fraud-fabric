@@ -16,7 +16,7 @@ param resourceGroupName string
 param administrationMember string
 
 @description('The user principal ID')
-param userPrincipalId string
+param userPrincipalId string = ''
 
 var abbrs = loadJsonContent('./abbreviations.json')
 
@@ -73,6 +73,9 @@ module chatCompletionModelDeployment 'core/AI/model-deployment.bicep' = {
 
 module rbac_ai_owner 'rbac/rbac.bicep' = {
   scope: rg
+  dependsOn: [
+    chatCompletionModelDeployment
+  ]
   params: {
     principalId: userPrincipalId
     resourceId: foundry.outputs.foundryResourceId
@@ -113,7 +116,11 @@ module acr 'core/container/registry.bicep' = {
   }
 }
 
-output foundryResourceName string = foundry.outputs.resourceName
-output projectEndpoint string = foundry.outputs.projectEndpoint
-output projectResourceName string = foundry.outputs.projectResourceName
-output chatCompletionDeploymentModel string = chatCompletionModelDeployment.outputs.deploymentModelName
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = '${acr.outputs.resourceName}.azurecr.io'
+output AZURE_CONTAINER_REGISTRY_NAME string = acr.outputs.resourceName
+output AZURE_RESOURCE_GROUP string = rg.name
+output AZURE_FRONTEND_WEBAPP_NAME string = serverFarm.outputs.frontEndWebAppName
+output FOUNDRY_RESOURCE_NAME string = foundry.outputs.resourceName
+output PROJECT_ENDPOINT string = foundry.outputs.projectEndpoint
+output PROJECT_RESOURCE_NAME string = foundry.outputs.projectResourceName
+output CHAT_COMPLETION_DEPLOYMENT_MODEL string = chatCompletionModelDeployment.outputs.deploymentModelName

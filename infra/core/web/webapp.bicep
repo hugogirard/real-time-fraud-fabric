@@ -52,6 +52,9 @@ resource fraudAgent 'Microsoft.Web/sites@2025-03-01' = {
 resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
   name: frontEndWebAppName
   location: location
+  tags: {
+    'azd-service-name': 'web'
+  }
   properties: {
     siteConfig: {
       appSettings: [
@@ -81,3 +84,5 @@ resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
     clientAffinityEnabled: false
   }
 }
+
+output frontEndWebAppName string = frontEnd.name

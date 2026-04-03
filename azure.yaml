@@ -4,7 +4,15 @@
 name: fraud-detection
 metadata:
   template: fraud-detection-agents@1.0.0
-#services:
+
+# services:
+#   web:
+#     project: ./src/web
+#     language: docker
+#     host: appservice
+#     docker:
+#       path: ./Dockerfile
+#       registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
 
 infra:
   provider: bicep
@@ -16,6 +24,13 @@ hooks:
     posix:
       shell: sh
       run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o tsv)
+      continueOnError: false
     windows:
       shell: pwsh
       run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o tsv)
+      continueOnError: false
+  postprovision:
+    windows:
+      shell: pwsh
+      continueOnError: false
+      run: ./scripts/deploy-apps.ps1
