@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Real-Time Fraud Detection API
+  description: API for real-time fraud detection powered by a Foundry agent.
+  version: 1.0.0
+
+paths:
+  /api/session/new:
+    get:
+      operationId: newSession
+      summary: Create a new chat session
+      description: >
+        Initializes a new fraud-detection chat session through the Foundry agent.
+        Returns a SessionInfo object containing a local session ID and a
+        Foundry service-side session ID. Both identifiers must be included in
+        subsequent calls to the /api/conversation endpoint.
+      responses:
+        "200":
+          description: Successful response with the new session info.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+        "500":
+          description: Internal server error.
+      security:
+        - functionKey: []
+
+  /api/conversation:
+    post:
+      operationId: conversation
+      summary: Send a prompt to the fraud detection agent
+      description: >
+        Sends a user prompt to the Foundry-backed fraud detection agent within
+        an existing session. The request must include a valid sessionInfo with
+        both sessionId and serviceSessionId obtained from /api/session/new.
+        The agent processes the prompt and returns its response in the answer
+        field along with updated session information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationRequest"
+      responses:
+        "200":
+          description: Successful response with the agent's reply.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationResponse"
+        "400":
+          description: Bad request — missing or invalid JSON body.
+        "500":
+          description: Internal server error.
+      security:
+        - functionKey: []
+
+components:
+  schemas:
+    SessionInfo:
+      type: object
+      description: Identifiers that link a conversation to an active Foundry agent session.
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          description: The unique local session identifier assigned when the session is created.
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        serviceSessionId:
+          type: string
+          nullable: true
+          description: >
+            The Foundry service-side session identifier. Returned after session
+            creation and required for subsequent conversation calls.
+          example: "svc-abc123"
+
+    ConversationRequest:
+      type: object
+      description: The request payload sent to the fraud detection agent.
+      required:
+        - sessionInfo
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: The user's message to send to the fraud detection agent.
+          example: "Is transaction TX-9832 fraudulent?"
+        sessionInfo:
+          $ref: "#/components/schemas/SessionInfo"
+
+    ConversationResponse:
+      type: object
+      description: The response returned by the fraud detection agent.
+      required:
+        - sessionInfo
+      properties:
+        answer:
+          type: string
+          nullable: true
+          description: The agent's response text for the given prompt.
+        sessionInfo:
+          $ref: "#/components/schemas/SessionInfo"
+
+  securitySchemes:
+    functionKey:
+      type: apiKey
+      in: query
+      name: code
+      description: Azure Function key for authentication.

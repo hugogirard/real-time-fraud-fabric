@@ -19,6 +19,7 @@ module role_assignment 'br/public:avm/ptn/authorization/resource-role-assignment
     roleDefinitionId: role.id
   }
 }
+
 // for id in webAppPrincipalIds: {
 //   name: 'webArcPull-${id}'
 //   params: {

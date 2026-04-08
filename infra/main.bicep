@@ -16,13 +16,18 @@ param resourceGroupName string
 param administrationMember string
 
 @description('The user principal ID')
-param userPrincipalId string
+param userPrincipalId string = ''
+
+@description('The publisher email for notification in APIM')
+param publisherEmail string
 
 var abbrs = loadJsonContent('./abbreviations.json')
 
 var tags = {
   SecurityControl: 'Ignore'
 }
+
+var functionName = 'func-${resourceToken}'
 
 // Model deployments, change it depending on your region
 // and the model you want to use
@@ -71,8 +76,11 @@ module chatCompletionModelDeployment 'core/AI/model-deployment.bicep' = {
   }
 }
 
-module rbac_ai_owner 'rbac/rbac.bicep' = {
+module rbac_ai_owner 'core/rbac/rbac.bicep' = {
   scope: rg
+  dependsOn: [
+    chatCompletionModelDeployment
+  ]
   params: {
     principalId: userPrincipalId
     resourceId: foundry.outputs.foundryResourceId
@@ -98,7 +106,7 @@ module serverFarm 'core/web/webapp.bicep' = {
   params: {
     location: location
     appServicePlanResourceName: '${abbrs.webServerFarms}${resourceToken}'
-    agentWebAppName: 'agent-${resourceToken}'
+    //agentWebAppName: 'agent-${resourceToken}'
     frontEndWebAppName: 'web-${resourceToken}'
   }
 }
@@ -113,7 +121,76 @@ module acr 'core/container/registry.bicep' = {
   }
 }
 
-output foundryResourceName string = foundry.outputs.resourceName
-output projectEndpoint string = foundry.outputs.projectEndpoint
-output projectResourceName string = foundry.outputs.projectResourceName
-output chatCompletionDeploymentModel string = chatCompletionModelDeployment.outputs.deploymentModelName
+// Application Insights
+module monitoring 'core/log/insight.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    appInsightResourceName: '${abbrs.insightsComponents}${resourceToken}'
+    workspaceResourceName: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
+  }
+}
+
+// Storage Account
+module storage 'core/storage/storage.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    containerName: 'app-package-${functionName}'
+    resourceName: 'str${resourceToken}'
+  }
+}
+
+// Function and dependencies
+module functionIdentity 'core/identity/user.assigned.identity.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    resourceName: '${abbrs.managedIdentityUserAssignedIdentities}${functionName}'
+  }
+}
+
+module rbac_blob_data_owner 'core/rbac/rbac.bicep' = {
+  scope: rg
+  dependsOn: [
+    chatCompletionModelDeployment
+  ]
+  params: {
+    principalId: functionIdentity.outputs.identityPrincipalId
+    resourceId: storage.outputs.resourceId
+    roleName: 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b' // Storage Blob Data Owner 
+  }
+}
+
+module function 'core/function/function.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    serverFarmResourceName: '${abbrs.webServerFarms}${functionName}'
+    containerName: storage.outputs.containerName
+    functionResourceName: '${abbrs.webSitesFunctions}${resourceToken}'
+    identityClientId: functionIdentity.outputs.identityClientId
+    identityId: functionIdentity.outputs.identityId
+    storageAccountName: storage.outputs.resourceName
+    appInsightResourceName: monitoring.outputs.insightResourceName
+  }
+}
+
+// APIM
+module apim 'core/apim/apim.bicep' = {
+  scope: rg
+  params: {
+    location: location
+    publisherEmail: publisherEmail
+    resourceName: '${abbrs.apiManagementService}${resourceToken}'
+  }
+}
+
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = '${acr.outputs.resourceName}.azurecr.io'
+output AZURE_CONTAINER_REGISTRY_NAME string = acr.outputs.resourceName
+output AZURE_RESOURCE_GROUP string = rg.name
+output AZURE_FRONTEND_WEBAPP_NAME string = serverFarm.outputs.frontEndWebAppName
+output FOUNDRY_RESOURCE_NAME string = foundry.outputs.resourceName
+output PROJECT_ENDPOINT string = foundry.outputs.projectEndpoint
+output PROJECT_RESOURCE_NAME string = foundry.outputs.projectResourceName
+output CHAT_COMPLETION_DEPLOYMENT_MODEL string = chatCompletionModelDeployment.outputs.deploymentModelName

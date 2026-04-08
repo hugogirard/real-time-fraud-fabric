@@ -1,0 +1,18 @@
+@baseUrl = http://localhost:7071
+
+GET {{baseUrl}}/api/session/new
+Content-Type: application/json
+
+###
+
+# After calling session/new, copy the full JSON response into the "session" field below
+POST {{baseUrl}}/api/conversation
+Content-Type: application/json
+
+{
+  "prompt": "What is my name",  
+  "sessionInfo": {
+    "sessionId": "d6a2f159-b03b-4ca2-a233-5539f333502f",
+    "serviceSessionId": "resp_0a3ab6770f0c98c90069d6adf710088194bf1110909067aeae"    
+  }
+}

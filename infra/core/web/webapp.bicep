@@ -1,6 +1,6 @@
 param appServicePlanResourceName string
 param location string
-param agentWebAppName string
+//param agentWebAppName string
 param frontEndWebAppName string
 
 resource asp 'Microsoft.Web/serverfarms@2024-11-01' = {
@@ -16,9 +16,45 @@ resource asp 'Microsoft.Web/serverfarms@2024-11-01' = {
   }
 }
 
-resource fraudAgent 'Microsoft.Web/sites@2025-03-01' = {
-  name: agentWebAppName
+// resource fraudAgent 'Microsoft.Web/sites@2025-03-01' = {
+//   name: agentWebAppName
+//   location: location
+//   properties: {
+//     siteConfig: {
+//       appSettings: [
+//         {
+//           name: 'DOCKER_REGISTRY_SERVER_URL'
+//           value: 'https://mcr.microsoft.com'
+//         }
+//         {
+//           name: 'DOCKER_REGISTRY_SERVER_USERNAME'
+//           value: ''
+//         }
+//         {
+//           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
+//           value: ''
+//         }
+//         {
+//           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
+//           value: 'false'
+//         }
+//       ]
+//       linuxFxVersion: 'DOCKER|mcr.microsoft.com/appsvc/staticsite:latest'
+//       alwaysOn: true
+//     }
+//     serverFarmId: asp.id
+//     httpsOnly: true
+//     publicNetworkAccess: 'Enabled'
+//     clientAffinityEnabled: false
+//   }
+// }
+
+resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
+  name: frontEndWebAppName
   location: location
+  tags: {
+    'azd-service-name': 'web'
+  }
   properties: {
     siteConfig: {
       appSettings: [
@@ -49,35 +85,4 @@ resource fraudAgent 'Microsoft.Web/sites@2025-03-01' = {
   }
 }
 
-resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
-  name: frontEndWebAppName
-  location: location
-  properties: {
-    siteConfig: {
-      appSettings: [
-        {
-          name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://mcr.microsoft.com'
-        }
-        {
-          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
-          value: ''
-        }
-        {
-          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-          value: ''
-        }
-        {
-          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
-          value: 'false'
-        }
-      ]
-      linuxFxVersion: 'DOCKER|mcr.microsoft.com/appsvc/staticsite:latest'
-      alwaysOn: true
-    }
-    serverFarmId: asp.id
-    httpsOnly: true
-    publicNetworkAccess: 'Enabled'
-    clientAffinityEnabled: false
-  }
-}
+output frontEndWebAppName string = frontEnd.name
