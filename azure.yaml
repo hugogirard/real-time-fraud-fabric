@@ -29,8 +29,8 @@ hooks:
       shell: pwsh
       run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o tsv)
       continueOnError: false
-  postprovision:
-    windows:
-      shell: pwsh
-      continueOnError: false
-      run: ./scripts/deploy-apps.ps1
+#   postprovision:
+#     windows:
+#       shell: pwsh
+#       continueOnError: false
+#       run: ./scripts/deploy-apps.ps1

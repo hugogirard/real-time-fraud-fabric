@@ -1,0 +1,8 @@
+@baseUrl = http://localhost:7071
+
+POST {{baseUrl}}/api/conversation
+Content-Type: application/json
+
+{
+  "prompt": "Is this transaction fraudulent?"
+}

@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: Real-Time Fraud Detection API
+  description: API for real-time fraud detection powered by a Foundry agent.
+  version: 1.0.0
+
+paths:
+  /api/conversation:
+    post:
+      operationId: conversation
+      summary: Send a prompt to the fraud detection agent
+      description: Accepts a prompt and returns the agent's response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationRequest"
+      responses:
+        "200":
+          description: Successful response with the agent's reply.
+          content:
+            text/plain:
+              schema:
+                type: string
+        "400":
+          description: Bad request — missing or invalid JSON body.
+        "500":
+          description: Internal server error.
+      security:
+        - functionKey: []
+
+components:
+  schemas:
+    ConversationRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: The prompt to send to the fraud detection agent.
+
+  securitySchemes:
+    functionKey:
+      type: apiKey
+      in: query
+      name: code
+      description: Azure Function key for authentication.

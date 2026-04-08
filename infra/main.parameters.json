@@ -16,6 +16,9 @@
     },
     "userPrincipalId": {
       "value": "${USER_PRINCIPAL_ID}"
+    },
+    "publisherEmail": {
+      "value": "${PUBLISHER_EMAIL}"
     }
   }
 }
