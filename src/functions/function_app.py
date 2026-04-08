@@ -1,33 +1,70 @@
 from services import ChatService
+from azure.functions import HttpMethod
+from contract import Conversation
 import azure.functions as func
+import json
 import logging
 
 chat_service = ChatService()
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-@app.route(route="conversation")
-def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+@app.route(route="session/new", methods=[HttpMethod.GET])
+def new_session(req:func.HttpRequest) -> func.HttpResponse:
+    logging.info("Calling get new session")
+
+    try:
+        session_data = chat_service.create_session()
+        return func.HttpResponse(
+            body=session_data.model_dump_json(indent=4),
+            mimetype="application/json",
+            status_code=200
+        )
+    except Exception as err:
+        logging.error(err)
+        return func.HttpResponse(
+             "Internal Server Error",
+             status_code=500
+        )        
+
+@app.route(route="conversation",methods=[HttpMethod.POST])
+async def run(req: func.HttpRequest) -> func.HttpResponse:
+
+    logging.info('Run conversation')
     
-    req_body = req.get_json()
-    prompt = req_body.get('prompt')
+    try:
+        
+        req_body = req.get_json()
+        conversation = Conversation(**req_body)
 
-    return func.HttpResponse(f"Prompt: {prompt}. This HTTP triggered function executed successfully.")
+        result = await chat_service.run(conversation=conversation)
+        # conversation = conversation
+        # prompt = req_body.get('prompt')
+        # session_data = req_body.get('session')
 
-    # #name = req.params.get('name')
-    # if not name:
-    #     try:
-    #         req_body = req.get_json()
-    #     except ValueError:
-    #         pass
-    #     else:
-    #         name = req_body.get('name')
+        # if not prompt:
+        #     return func.HttpResponse(
+        #         "The prompt is not present in the body",
+        #         status_code=404
+        #     )
+        
+        # if not session_data:
+        #     return func.HttpResponse(
+        #         "The session is not present in the body",
+        #         status_code=404
+        #     )
+        
+        # answer, updated_session = await chat_service.run(prompt=prompt, session_data=session_data)
 
-    # if name:
-    #     return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    # else:
-    #     return func.HttpResponse(
-    #          "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-    #          status_code=200
-    #     )
+        return func.HttpResponse(
+            body=result.model_dump_json(indent=4),
+            mimetype="application/json",
+            status_code=200
+        )
+    
+    except Exception as err: 
+        logging.error(err)
+        return func.HttpResponse(
+             "Internal Server Error",
+             status_code=500
+        )

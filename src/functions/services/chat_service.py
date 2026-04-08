@@ -1,6 +1,7 @@
 from config import Config
-from agent_framework import Agent
+from contract import SessionInfo, Conversation
 from agent_framework.foundry import FoundryAgent
+from agent_framework import AgentSession
 from azure.identity.aio import DefaultAzureCredential
 
 class ChatService:
@@ -15,10 +16,23 @@ class ChatService:
             credential=DefaultAzureCredential()
         )
     
-    def create_session(self) -> str:
-        session = self.agent.create_session()
-        return session.session_id
+    def create_session(self) -> SessionInfo:
+        session = self.agent.create_session()    
+        return SessionInfo(
+            sessionId=session.session_id,
+            serviceSessionId=session.service_session_id
+        )
     
-    async def run(self,prompt:str) -> str:
-        result = await self.agent.run(prompt)
-        return result.text
+    async def run(self, conversation:Conversation) -> Conversation:
+        session = self.agent.get_session(service_session_id=conversation.session_info.service_session_id,
+                                         session_id=conversation.session_info.session_id)
+        # session = AgentSession.from_dict(session_data)
+        result = await self.agent.run(conversation.prompt, session=session)
+        return Conversation(
+            answer=result.text,
+            sessionInfo=SessionInfo(
+                sessionId=session.session_id,
+                serviceSessionId=session.service_session_id
+            )
+        )
+        # return result.text, session.to_dict()
