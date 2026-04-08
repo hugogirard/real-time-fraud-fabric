@@ -173,6 +173,7 @@ module function 'core/function/function.bicep' = {
     identityId: functionIdentity.outputs.identityId
     storageAccountName: storage.outputs.resourceName
     appInsightResourceName: monitoring.outputs.insightResourceName
+    foundryResourceName: foundry.outputs.resourceName
   }
 }
 
