@@ -6,6 +6,7 @@ param identityClientId string
 param storageAccountName string
 param containerName string
 param appInsightResourceName string
+param foundryResourceName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -30,6 +31,9 @@ resource flexFunctionPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
 
 resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
   name: functionResourceName
+  tags: {
+    'azd-service-name': 'function'
+  }
   location: location
   kind: 'functionapp,linux'
   identity: {
@@ -72,6 +76,9 @@ resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
       AzureWebJobsStorage__tableServiceUri: '$https://${storageAccountName}.table.core.windows.net'
       AzureWebJobsStorage__clientId: identityClientId
       AzureWebJobsStorage__credential: 'managedidentity'
+      FOUNDRY_PROJECT_ENDPOINT: 'https://${foundryResourceName}.services.ai.azure.com/api/projects/fraud-detection'
+      FOUNDRY_AGENT_NAME: 'FraudAgent'
+      FOUNDRY_AGENT_VERSION: '1'
     }
   }
 }

@@ -5,14 +5,11 @@ name: fraud-detection
 metadata:
   template: fraud-detection-agents@1.0.0
 
-# services:
-#   web:
-#     project: ./src/web
-#     language: docker
-#     host: appservice
-#     docker:
-#       path: ./Dockerfile
-#       registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+services:
+  function:
+    project: ./src/functions
+    language: python
+    host: function
 
 infra:
   provider: bicep
