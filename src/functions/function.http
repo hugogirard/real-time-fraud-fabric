@@ -10,7 +10,7 @@ POST {{baseUrl}}/api/conversation
 Content-Type: application/json
 
 {
-  "prompt": "Hi, I am Hugo",  
+  "prompt": "What is my name",  
   "sessionInfo": {
     "sessionId": "d6a2f159-b03b-4ca2-a233-5539f333502f",
     "serviceSessionId": "resp_0a3ab6770f0c98c90069d6adf710088194bf1110909067aeae"    
