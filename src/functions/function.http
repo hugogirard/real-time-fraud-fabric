@@ -2,6 +2,10 @@
 
 GET {{baseUrl}}/api/session/new
 Content-Type: application/json
+###
+
+GET {{baseUrl}}/api/stream
+Content-Type: application/json
 
 ###
 
@@ -10,9 +14,9 @@ POST {{baseUrl}}/api/conversation
 Content-Type: application/json
 
 {
-  "prompt": "What is my name",  
+  "prompt": "Hi my name is Hugo",  
   "sessionInfo": {
-    "sessionId": "d6a2f159-b03b-4ca2-a233-5539f333502f",
-    "serviceSessionId": "resp_0a3ab6770f0c98c90069d6adf710088194bf1110909067aeae"    
+    "sessionId": "5e7947d6-1130-419e-b119-32732b42f7c6",
+    "serviceSessionId": ""    
   }
 }
