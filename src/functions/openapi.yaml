@@ -34,8 +34,7 @@ paths:
         Sends a user prompt to the Foundry-backed fraud detection agent within
         an existing session. The request must include a valid sessionInfo with
         both sessionId and serviceSessionId obtained from /api/session/new.
-        The agent processes the prompt and returns its response in the answer
-        field along with updated session information.
+        The response is streamed back as server-sent events (text/event-stream).
       requestBody:
         required: true
         content:
@@ -44,11 +43,12 @@ paths:
               $ref: "#/components/schemas/ConversationRequest"
       responses:
         "200":
-          description: Successful response with the agent's reply.
+          description: Streamed response with the agent's reply as server-sent events.
           content:
-            application/json:
+            text/event-stream:
               schema:
-                $ref: "#/components/schemas/ConversationResponse"
+                type: string
+                description: A stream of server-sent events containing the agent's response chunks.
         "400":
           description: Bad request — missing or invalid JSON body.
         "500":
@@ -87,19 +87,6 @@ components:
           type: string
           description: The user's message to send to the fraud detection agent.
           example: "Is transaction TX-9832 fraudulent?"
-        sessionInfo:
-          $ref: "#/components/schemas/SessionInfo"
-
-    ConversationResponse:
-      type: object
-      description: The response returned by the fraud detection agent.
-      required:
-        - sessionInfo
-      properties:
-        answer:
-          type: string
-          nullable: true
-          description: The agent's response text for the given prompt.
         sessionInfo:
           $ref: "#/components/schemas/SessionInfo"
 

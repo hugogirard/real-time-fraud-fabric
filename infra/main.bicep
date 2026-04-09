@@ -162,6 +162,15 @@ module rbac_blob_data_owner 'core/rbac/rbac.bicep' = {
   }
 }
 
+module ai_user_foundry 'core/rbac/rbac.bicep' = {
+  scope: rg
+  params: {
+    principalId: functionIdentity.outputs.identityPrincipalId
+    resourceId: foundry.outputs.foundryResourceId
+    roleName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User
+  }
+}
+
 module function 'core/function/function.bicep' = {
   scope: rg
   params: {

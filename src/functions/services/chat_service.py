@@ -3,6 +3,7 @@ from contract import SessionInfo, Conversation
 from agent_framework.foundry import FoundryAgent
 from agent_framework import AgentSession
 from azure.identity.aio import DefaultAzureCredential
+import json
 
 class ChatService:
     
@@ -23,16 +24,17 @@ class ChatService:
             serviceSessionId=session.service_session_id
         )
     
-    async def run(self, conversation:Conversation) -> Conversation:
+    async def run(self, conversation: Conversation):
+
         session = self.agent.get_session(service_session_id=conversation.session_info.service_session_id,
                                          session_id=conversation.session_info.session_id)
-        # session = AgentSession.from_dict(session_data)
-        result = await self.agent.run(conversation.prompt, session=session)
-        return Conversation(
-            answer=result.text,
-            sessionInfo=SessionInfo(
-                sessionId=session.session_id,
-                serviceSessionId=session.service_session_id
-            )
+        
+        async for update in self.agent.run(conversation.prompt, session=session, stream=True):
+            if update.text:
+                yield json.dumps({"type": "content", "text": update.text})
+
+        session_info = SessionInfo(
+            sessionId=session.session_id,
+            serviceSessionId=session.service_session_id
         )
-        # return result.text, session.to_dict()
+        yield json.dumps({"type": "session_info", **json.loads(session_info.model_dump_json(by_alias=True))})

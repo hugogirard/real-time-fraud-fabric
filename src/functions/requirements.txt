@@ -3,6 +3,7 @@
 # azure-monitor-opentelemetry
 
 azure-functions
+azurefunctions-extensions-http-fastapi
 azure-identity==1.25.3
 agent-framework-foundry==1.0.0
 aiohttp==3.13.5
