@@ -76,6 +76,8 @@ resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
       AzureWebJobsStorage__tableServiceUri: '$https://${storageAccountName}.table.core.windows.net'
       AzureWebJobsStorage__clientId: identityClientId
       AzureWebJobsStorage__credential: 'managedidentity'
+      PYTHON_ENABLE_INIT_INDEXING: '1'
+      PYTHON_ISOLATE_WORKER_DEPENDENCIES: '1'
       FOUNDRY_PROJECT_ENDPOINT: 'https://${foundryResourceName}.services.ai.azure.com/api/projects/fraud-detection'
       FOUNDRY_AGENT_NAME: 'FraudAgent'
       FOUNDRY_AGENT_VERSION: '1'
