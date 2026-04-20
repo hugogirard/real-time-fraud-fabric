@@ -5,11 +5,11 @@ name: fraud-detection
 metadata:
   template: fraud-detection-agents@1.0.0
 
-services:
-  function:
-    project: ./src/functions
-    language: python
-    host: function
+# services:
+#   function:
+#     project: ./src/functions
+#     language: python
+#     host: function
 
 infra:
   provider: bicep
@@ -20,12 +20,15 @@ hooks:
   preprovision:
     posix:
       shell: sh
-      run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o tsv)
+      run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o
+        tsv)
       continueOnError: false
     windows:
       shell: pwsh
-      run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o tsv)
+      run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o
+        tsv)
       continueOnError: false
+
 #   postprovision:
 #     windows:
 #       shell: pwsh

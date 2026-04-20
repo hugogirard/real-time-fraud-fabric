@@ -42,6 +42,20 @@ var chatCompletionModelSkuCapacity = 150
 
 var chatCompletionModelDeploymentSKU = 'GlobalStandard'
 
+var requiredResourceAccess = [
+  {
+    // MS Graph well-known application ID
+    resourceAppId: '00000003-0000-0000-c000-000000000000'
+    resourceAccess: [
+      {
+        // Well-known permission ID for User.Read delegated scope
+        id: 'e1fe6dd8-ba31-4d61-89e7-88639da4683d'
+        type: 'Scope' // Delegated permission
+      }
+    ]
+  }
+]
+
 // End model properties deployment
 
 #disable-next-line no-unused-vars
@@ -99,6 +113,7 @@ module fabric 'core/data/fabric.bicep' = {
     fabricResourceName: 'fabric${resourceToken}'
   }
 }
+var frontEndResourceName = 'web-${resourceToken}'
 
 // Workload hosting (backend and frontend)
 module serverFarm 'core/web/webapp.bicep' = {
@@ -106,8 +121,16 @@ module serverFarm 'core/web/webapp.bicep' = {
   params: {
     location: location
     appServicePlanResourceName: '${abbrs.webServerFarms}${resourceToken}'
-    //agentWebAppName: 'agent-${resourceToken}'
-    frontEndWebAppName: 'web-${resourceToken}'
+    frontEndWebAppName: frontEndResourceName
+  }
+}
+
+module webAppIdentity 'core/entraID/app.registration.bicep' = {
+  scope: rg
+  params: {
+    appDisplayName: 'Fraud Detection Angular App'
+    appUniqueName: frontEndResourceName
+    requiredResourcceAccess: requiredResourceAccess
   }
 }
 
@@ -174,20 +197,6 @@ module ai_user_foundry 'core/rbac/rbac.bicep' = {
 // Create app registration for the function
 var functionResourceName = '${abbrs.webSitesFunctions}${resourceToken}'
 
-var requiredResourceAccess = [
-  {
-    // MS Graph well-known application ID
-    resourceAppId: '00000003-0000-0000-c000-000000000000'
-    resourceAccess: [
-      {
-        // Well-known permission ID for User.Read delegated scope
-        id: 'e1fe6dd8-ba31-4d61-89e7-88639da4683d'
-        type: 'Scope' // Delegated permission
-      }
-    ]
-  }
-]
-
 module appRegistrationFunction 'core/entraID/app.registration.bicep' = {
   scope: rg
   params: {
@@ -209,6 +218,7 @@ module function 'core/function/function.bicep' = {
     storageAccountName: storage.outputs.resourceName
     appInsightResourceName: monitoring.outputs.insightResourceName
     foundryResourceName: foundry.outputs.resourceName
+    appRegistrationClientId: appRegistrationFunction.outputs.applicationId
   }
 }
 

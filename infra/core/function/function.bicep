@@ -7,6 +7,7 @@ param storageAccountName string
 param containerName string
 param appInsightResourceName string
 param foundryResourceName string
+param appRegistrationClientId string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -81,6 +82,34 @@ resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
       FOUNDRY_PROJECT_ENDPOINT: 'https://${foundryResourceName}.services.ai.azure.com/api/projects/fraud-detection'
       FOUNDRY_AGENT_NAME: 'FraudAgent'
       FOUNDRY_AGENT_VERSION: '1'
+    }
+  }
+}
+
+var openIdIssuer = 'https://login.microsoftonline.com/v2.0/${tenant().tenantId}/'
+
+resource configAuth 'Microsoft.Web/sites/config@2022-03-01' = {
+  parent: flexFunctionApp
+  name: 'authsettingsV2'
+  properties: {
+    globalValidation: {
+      requireAuthentication: true
+      unauthenticatedClientAction: 'Return401'
+    }
+    httpSettings: {
+      requireHttps: true
+    }
+    identityProviders: {
+      azureActiveDirectory: {
+        enabled: true
+        registration: {
+          clientId: appRegistrationClientId
+          openIdIssuer: openIdIssuer
+        }
+        validation: {
+          allowedAudiences: []
+        }
+      }
     }
   }
 }
