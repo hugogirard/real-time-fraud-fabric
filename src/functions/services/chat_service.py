@@ -1,7 +1,7 @@
 from config import Config
 from contract import SessionInfo, Conversation
 from agent_framework.foundry import FoundryAgent
-from agent_framework import AgentSession
+from agent_framework import AgentSession, Agent
 from azure.identity.aio import DefaultAzureCredential
 import json
 

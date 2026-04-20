@@ -171,6 +171,32 @@ module ai_user_foundry 'core/rbac/rbac.bicep' = {
   }
 }
 
+// Create app registration for the function
+var functionResourceName = '${abbrs.webSitesFunctions}${resourceToken}'
+
+var requiredResourceAccess = [
+  {
+    // MS Graph well-known application ID
+    resourceAppId: '00000003-0000-0000-c000-000000000000'
+    resourceAccess: [
+      {
+        // Well-known permission ID for User.Read delegated scope
+        id: 'e1fe6dd8-ba31-4d61-89e7-88639da4683d'
+        type: 'Scope' // Delegated permission
+      }
+    ]
+  }
+]
+
+module appRegistrationFunction 'core/entraID/app.registration.bicep' = {
+  scope: rg
+  params: {
+    appDisplayName: 'Fraud-Agent-Function'
+    appUniqueName: functionResourceName
+    requiredResourcceAccess: requiredResourceAccess
+  }
+}
+
 module function 'core/function/function.bicep' = {
   scope: rg
   params: {
