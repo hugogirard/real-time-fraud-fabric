@@ -5,6 +5,8 @@ import { Message, Role } from "../../model/message";
 import { Session } from "../../model/session";
 import { Loading } from "../loading/loading";
 import { MsalService } from "@azure/msal-angular";
+import { MessageStore } from "../../stores/message.store";
+import { RemarkModule } from "ngx-remark";
 
 
 
@@ -13,7 +15,7 @@ import { MsalService } from "@azure/msal-angular";
     standalone: true,
     styleUrl: './chat.css',
     templateUrl: './chat.html',
-    imports: [DatePipe, Loading]
+    imports: [DatePipe, Loading, RemarkModule]
 })
 export class Chat {
 
@@ -29,11 +31,12 @@ export class Chat {
     isTyping = signal(false);
     username: string | null = null;
     initial: string | null = null;
+    userMessage = signal('');
 
     readonly loadingTitle = 'Loading conversation';
     Role = Role;
 
-    constructor(private fraudService: FraudService, private authService: MsalService) {
+    constructor(public messageStore: MessageStore, private authService: MsalService) {
 
         effect((onCleanup) => {
             const s = this.session();
@@ -42,7 +45,7 @@ export class Chat {
                 this.isTyping.set(true);
                 const timer = setTimeout(() => {
                     this.isTyping.set(false);
-                    this.messages.set([this.welcomeMessage]);
+                    this.messageStore.addWelcomeMessage(this.welcomeMessage.text);
                 }, 2000);
                 onCleanup(() => clearTimeout(timer));
             }
@@ -59,6 +62,13 @@ export class Chat {
                 const lastLetter = elements[elements.length - 1][0];
                 this.initial = `${firstLetter}${lastLetter}`
             }
+        }
+    }
+
+    onSend() {
+        if (!this.messageStore.isStreaming()) {
+            this.messageStore.sendMessage(this.userMessage());
+            this.userMessage.set('');;
         }
     }
 }

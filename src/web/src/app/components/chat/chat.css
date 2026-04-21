@@ -400,6 +400,24 @@
     font-weight: var(--font-weight-bold);
 }
 
+.message-bubble p {
+    margin: 0;
+}
+
+.message-bubble p+p {
+    margin-top: 0.5em;
+}
+
+.message-bubble ol,
+.message-bubble ul {
+    margin: var(--spacing-s) 0;
+    padding-left: var(--spacing-xl);
+}
+
+.message-bubble li {
+    margin-bottom: var(--spacing-xs);
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .chat-page {

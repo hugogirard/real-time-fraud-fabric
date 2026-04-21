@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Message, Role } from "../model/message";
 import { Observable, of, delay } from "rxjs";
-import { HttpClient, HttpEventType } from "@angular/common/http";
+import { HttpClient, HttpEvent, HttpEventType } from "@angular/common/http";
 import { environment } from "../environments/environment";
 import { StateService } from "./state.service";
 import { Conversation } from "../model/conversation";
@@ -40,7 +40,7 @@ export class FraudService {
 
     }
 
-    askQuestion(prompt: string): Observable<Message> {
+    askQuestion(prompt: string): Observable<HttpEvent<string>> {
 
         const sessionInfo = this.stateService.getSessionItem<Session>(Constant.SESSION_KEY);
 
@@ -49,17 +49,13 @@ export class FraudService {
             sessionInfo: sessionInfo
         }
 
-        this.http.post(`${environment.apiBaseUrl}/api/conversation`, conversation, {
+        return this.http.post(`${environment.apiBaseUrl}/api/conversation`, conversation, {
             observe: 'events',
             reportProgress: true,
             responseType: 'text'
-        }).subscribe({
-            next: (event) => {
-                if (event.type === HttpEventType.DownloadProgress) {
-
-                }
-            }
         });
+
+
         // const message: Message = {
         //     id: `m${Date.now() + 1}`,
         //     role: Role.Assistant,

@@ -30,7 +30,7 @@ def new_session(req:Request) -> JSONResponse:
     try:
         session_data = chat_service.create_session()
         return JSONResponse(
-            content=json.loads(session_data.model_dump_json(indent=4)),
+            content=json.loads(session_data.model_dump_json(indent=4,by_alias=True)),
             status_code=200
         )        
     except Exception as err:

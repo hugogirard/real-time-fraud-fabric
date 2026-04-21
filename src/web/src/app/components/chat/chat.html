@@ -31,7 +31,28 @@
 
         <!-- Message list -->
         <div id="message-list">
-            @for (msg of messages(); track msg.id) {
+            @for (msg of messageStore.messages(); track $index) {
+            <div class="message" [class.bot]="msg.role === 'assistant'" [class.user]="msg.role === 'user'">
+                <div class="message-avatar">{{ msg.role === 'assistant' ? 'CB' : 'JD' }}</div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <remark [markdown]="msg.content"></remark>
+                    </div>
+                </div>
+            </div>
+            }
+
+            @if (messageStore.isStreaming() && messageStore.streamingContent()) {
+            <div class="message bot">
+                <div class="message-avatar">CB</div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <remark [markdown]="messageStore.streamingContent()"></remark>
+                    </div>
+                </div>
+            </div>
+            }
+            <!-- @for (msg of messages(); track msg.id) {
             <div class="message" [class.bot]="msg.role === Role.Assistant" [class.user]="msg.role === Role.User">
                 <div class="message-avatar">{{ msg.role === Role.Assistant ? 'CB' : 'JD' }}</div>
                 <div class="message-content">
@@ -39,7 +60,7 @@
                     <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
                 </div>
             </div>
-            }
+            } -->
         </div>
 
         <!-- Typing indicator -->
@@ -56,8 +77,9 @@
     <div id="chat-input-area" class="chat-input-area">
         <div class="chat-input-wrapper">
             <textarea id="chat-input" class="chat-input" rows="1" placeholder="Type your message…"
-                aria-label="Type your message"></textarea>
-            <button id="send-btn" class="chat-send-btn" title="Send message">
+                [value]="userMessage()" [disabled]="messageStore.isStreaming()"
+                (input)="userMessage.set($any($event.target).value)" aria-label="Type your message"></textarea>
+            <button id="send-btn" class="chat-send-btn" title="Send message" (click)="onSend()">
                 <img src="images/send-icon.svg" alt="Send" />
             </button>
         </div>
