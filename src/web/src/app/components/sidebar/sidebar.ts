@@ -1,10 +1,13 @@
-import { Component, output, signal } from "@angular/core";
+import { Component, DestroyRef, inject, Optional, output, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { SessionService } from "../../services/session.service";
 import { Session } from "../../model/session";
 import { StateService } from "../../services/state.service";
 import { NgClass } from "@angular/common";
 import { SessionComponent } from "../session/session";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { MsalService } from "@azure/msal-angular";
+import { environment } from "../../environments/environment";
 
 
 @Component({
@@ -15,6 +18,7 @@ import { SessionComponent } from "../session/session";
 })
 export class SideBar {
 
+    private destroyRef = inject(DestroyRef);
     loadingSession = signal(true);
     sessions = signal<Session[]>([]);
     activeSessions = signal<Session[]>([]);
@@ -23,15 +27,21 @@ export class SideBar {
 
     sessionSelected = output<Session>();
 
-    constructor(private router: Router, private sessionService: SessionService, private stateService: StateService) { }
+    constructor(@Optional() private authService: MsalService,
+        private router: Router,
+        private sessionService: SessionService,
+        private stateService: StateService) { }
 
     ngOnInit() {
         this.getSessions();
     }
 
     logout() {
-        // Implement Entra ID logout
-        this.router.navigate(['/'])
+
+        if (!environment.useOauth)
+            this.router.navigate(['/'])
+
+        this.authService.logoutRedirect();
     }
 
     selectSession(session: Session) {
@@ -43,7 +53,7 @@ export class SideBar {
     }
 
     getSessions() {
-        this.sessionService.getSessions().subscribe(sessions => {
+        this.sessionService.getSessions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(sessions => {
             this.loadingSession.set(false);
             this.sessions.set(sessions);
             this.activeSessions.set(sessions.filter(s => !s.resolved));

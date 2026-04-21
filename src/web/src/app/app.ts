@@ -1,5 +1,14 @@
-import { Component, signal } from '@angular/core';
+import { Component, Inject, Optional, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { environment } from './environments/environment'
+
+// Required for MSAL
+import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfiguration } from '@azure/msal-angular';
+import { EventMessage, EventType, InteractionStatus, RedirectRequest } from '@azure/msal-browser';
+
+// Required for RJXS
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -9,4 +18,100 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('Fraud');
+  private readonly _destroying$ = new Subject<void>();
+  private useOauth: boolean = environment.useOauth;
+  private loginDisplay: boolean = false;
+  private tokenExpiration: string = '';
+
+  constructor(
+    @Optional() @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
+    @Optional() private authService: MsalService,
+    @Optional() private msalBroadcastService: MsalBroadcastService
+  ) { }
+
+  ngOnInit(): void {
+
+    // Fix — guard the entire block
+    if (!this.useOauth || !this.msalBroadcastService) return;
+
+    this.authService.handleRedirectObservable().subscribe();
+
+    this.msalBroadcastService.inProgress$
+      .pipe(
+        filter((status: InteractionStatus) => status === InteractionStatus.None),
+        takeUntil(this._destroying$)
+      )
+      .subscribe(() => {
+        this.setLoginDisplay();
+
+        // Add this: Force login if user is not authenticated
+        if (!this.loginDisplay) {
+          this.login();
+        }
+      });
+
+
+
+    // Used for storing and displaying token expiration
+    this.msalBroadcastService.msalSubject$.pipe(filter((msg: EventMessage) => msg.eventType === EventType.ACQUIRE_TOKEN_SUCCESS)).subscribe(msg => {
+      this.tokenExpiration = (msg.payload as any).expiresOn;
+      localStorage.setItem('tokenExpiration', this.tokenExpiration);
+    });
+
+    // Add this: Listen for successful login and set active account
+    this.msalBroadcastService.msalSubject$
+      .pipe(
+        filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
+        takeUntil(this._destroying$)
+      )
+      .subscribe((result: EventMessage) => {
+        const payload = result.payload as any;
+        this.authService.instance.setActiveAccount(payload.account);
+        this.setLoginDisplay();
+      });
+  }
+
+  setLoginDisplay() {
+
+    if (!this.useOauth)
+      return;
+
+    this.loginDisplay = this.authService.instance.getAllAccounts().length > 0;
+
+    // Set active account if not already set
+    if (this.loginDisplay && !this.authService.instance.getActiveAccount()) {
+      const accounts = this.authService.instance.getAllAccounts();
+      if (accounts.length > 0) {
+        this.authService.instance.setActiveAccount(accounts[0]);
+      }
+    }
+
+  }
+
+  // Log the user in with redirect
+  login() {
+
+    if (!this.useOauth)
+      return;
+
+    if (this.msalGuardConfig.authRequest) {
+      this.authService.loginRedirect({ ...this.msalGuardConfig.authRequest } as RedirectRequest);
+    } else {
+      this.authService.loginRedirect();
+    }
+  }
+
+  // Log the user out
+  logout() {
+
+    if (!this.useOauth)
+      return;
+
+    this.authService.logoutRedirect();
+  }
+
+  ngOnDestroy(): void {
+    this._destroying$.next(undefined);
+    this._destroying$.complete();
+  }
 }

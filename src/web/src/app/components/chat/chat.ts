@@ -23,14 +23,15 @@ export class Chat {
     Role = Role;
 
     constructor(private fraudService: FraudService) {
-        effect(() => {
+        effect((onCleanup) => {
             const s = this.session();
             if (s) {
                 this.isLoading.set(true);
-                this.fraudService.getMessages(s.id).subscribe(msgs => {
+                const sub = this.fraudService.getMessages(s.id).subscribe(msgs => {
                     this.messages.set(msgs);
                     this.isLoading.set(false);
                 });
+                onCleanup(() => sub.unsubscribe());
             }
         });
     }

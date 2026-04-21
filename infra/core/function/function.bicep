@@ -86,7 +86,7 @@ resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
   }
 }
 
-var openIdIssuer = 'https://login.microsoftonline.com/v2.0/${tenant().tenantId}/'
+var openIdIssuer = 'https://login.microsoftonline.com/${tenant().tenantId}/v2.0'
 
 resource configAuth 'Microsoft.Web/sites/config@2022-03-01' = {
   parent: flexFunctionApp
@@ -105,9 +105,6 @@ resource configAuth 'Microsoft.Web/sites/config@2022-03-01' = {
         registration: {
           clientId: appRegistrationClientId
           openIdIssuer: openIdIssuer
-        }
-        validation: {
-          allowedAudiences: []
         }
       }
     }

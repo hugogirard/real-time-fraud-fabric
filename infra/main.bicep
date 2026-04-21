@@ -125,7 +125,7 @@ module serverFarm 'core/web/webapp.bicep' = {
   }
 }
 
-module webAppIdentity 'core/entraID/app.registration.bicep' = {
+module webAppRegistration 'core/entraID/app.registration.bicep' = {
   scope: rg
   params: {
     appDisplayName: 'Fraud Detection Angular App'
