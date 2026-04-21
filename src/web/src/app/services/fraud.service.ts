@@ -30,8 +30,8 @@ export class FraudService {
 
     private responseIndex = 0;
 
-    getMessages(sessionId: string): Observable<Message[]> {
-        return of(this.conversation).pipe(delay(3000));
+    createNewSession() {
+
     }
 
     askQuestion(prompt: string): Observable<Message> {

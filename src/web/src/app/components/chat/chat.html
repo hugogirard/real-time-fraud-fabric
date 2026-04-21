@@ -5,31 +5,31 @@
     <!-- Chat Header -->
     <div id="chat-header" class="chat-header">
         <div class="chat-header-title">
-            <h2 id="chat-title">{{ session() ? session()!.title : 'Select a conversation' }}</h2>
-            <span id="chat-status-badge"></span>
+            <div class="chat-brand">
+                <div class="chat-brand-icon">
+                    <img src="images/shield.svg" alt="Shield icon" />
+                </div>
+                <span>Contoso Bank</span>
+            </div>
         </div>
         <div class="chat-header-actions">
-            <!-- Placeholder for future actions -->
+            <div class="chat-user-info">
+                <div class="chat-user-details">
+                    <span class="chat-user-name">John Doe</span>
+                </div>
+                <div class="chat-user-avatar">JD</div>
+                <button class="chat-logout-btn" title="Sign out">
+                    <img src="images/logout-icon.svg" alt="Sign out icon" />
+                    <span>Sign out</span>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Messages -->
     <div id="chat-messages" class="chat-messages">
 
-        <!-- Welcome / empty state -->
-        @if (!session()) {
-        <div id="chat-welcome" class="chat-welcome">
-            <div class="chat-welcome-icon">
-                <img src="images/shield-welcome.svg" alt="Shield icon" />
-            </div>
-            <h3>Fraud Alert Assistant</h3>
-            <p>Select an existing conversation from the sidebar or start a new one to get help with a fraud
-                alert on your account.</p>
-        </div>
-        }
-
         <!-- Message list -->
-        @if (session()) {
         <div id="message-list">
             @for (msg of messages(); track msg.id) {
             <div class="message" [class.bot]="msg.role === Role.Assistant" [class.user]="msg.role === Role.User">
@@ -41,14 +41,15 @@
             </div>
             }
         </div>
-        }
 
         <!-- Typing indicator -->
-        <div id="typing-indicator" class="typing-indicator">
+        @if (isTyping()) {
+        <div id="typing-indicator" class="typing-indicator visible">
             <span class="typing-dot"></span>
             <span class="typing-dot"></span>
             <span class="typing-dot"></span>
         </div>
+        }
     </div>
 
     <!-- Chat Input -->
@@ -56,7 +57,7 @@
         <div class="chat-input-wrapper">
             <textarea id="chat-input" class="chat-input" rows="1" placeholder="Type your message…"
                 aria-label="Type your message"></textarea>
-            <button id="send-btn" class="chat-send-btn" title="Send message" disabled>
+            <button id="send-btn" class="chat-send-btn" title="Send message">
                 <img src="images/send-icon.svg" alt="Send" />
             </button>
         </div>

@@ -17,21 +17,29 @@ import { Loading } from "../loading/loading";
 export class Chat {
 
     session = input<Session>();
+    private readonly welcomeMessage: Message = {
+        id: 'welcome',
+        role: Role.Assistant,
+        text: 'Hi, I am the assistant for Fraud Detection at Contoso Bank. How can I help you today?',
+        createdAt: new Date().toISOString()
+    };
     messages = signal<Message[]>([]);
     isLoading = signal(false);
+    isTyping = signal(false);
     readonly loadingTitle = 'Loading conversation';
     Role = Role;
 
     constructor(private fraudService: FraudService) {
         effect((onCleanup) => {
             const s = this.session();
-            if (s) {
-                this.isLoading.set(true);
-                const sub = this.fraudService.getMessages(s.id).subscribe(msgs => {
-                    this.messages.set(msgs);
-                    this.isLoading.set(false);
-                });
-                onCleanup(() => sub.unsubscribe());
+            if (s && s.sessionId != '') {
+                // Set default message but show ... like someone is typing
+                this.isTyping.set(true);
+                const timer = setTimeout(() => {
+                    this.isTyping.set(false);
+                    this.messages.set([this.welcomeMessage]);
+                }, 2000);
+                onCleanup(() => clearTimeout(timer));
             }
         });
     }
