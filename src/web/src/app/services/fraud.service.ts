@@ -1,6 +1,12 @@
 import { Injectable } from "@angular/core";
 import { Message, Role } from "../model/message";
 import { Observable, of, delay } from "rxjs";
+import { HttpClient, HttpEventType } from "@angular/common/http";
+import { environment } from "../environments/environment";
+import { StateService } from "./state.service";
+import { Conversation } from "../model/conversation";
+import { Constant } from "../infrastructure/constants";
+import { Session } from "../model/session";
 
 @Injectable({
     providedIn: 'root'
@@ -30,18 +36,37 @@ export class FraudService {
 
     private responseIndex = 0;
 
-    createNewSession() {
+    constructor(private http: HttpClient, private stateService: StateService) {
 
     }
 
     askQuestion(prompt: string): Observable<Message> {
-        const message: Message = {
-            id: `m${Date.now() + 1}`,
-            role: Role.Assistant,
-            text: this.botResponses[this.responseIndex % this.botResponses.length],
-            createdAt: new Date(Date.now() + 1500).toISOString()
+
+        const sessionInfo = this.stateService.getSessionItem<Session>(Constant.SESSION_KEY);
+
+        const conversation: Conversation = {
+            prompt: prompt,
+            sessionInfo: sessionInfo
         }
-        this.responseIndex++;
-        return of(message).pipe(delay(2000));
+
+        this.http.post(`${environment.apiBaseUrl}/api/conversation`, conversation, {
+            observe: 'events',
+            reportProgress: true,
+            responseType: 'text'
+        }).subscribe({
+            next: (event) => {
+                if (event.type === HttpEventType.DownloadProgress) {
+
+                }
+            }
+        });
+        // const message: Message = {
+        //     id: `m${Date.now() + 1}`,
+        //     role: Role.Assistant,
+        //     text: this.botResponses[this.responseIndex % this.botResponses.length],
+        //     createdAt: new Date(Date.now() + 1500).toISOString()
+        // }
+        // this.responseIndex++;
+        // return of(message).pipe(delay(2000));
     }
 }
