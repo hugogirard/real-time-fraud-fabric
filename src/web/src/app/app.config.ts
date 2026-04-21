@@ -50,8 +50,7 @@ export function initializeMsalFactory(msal: MsalService): () => Promise<void> {
   return () => msal.instance.initialize();
 }
 
-// Conditional providers based on useOauth flag
-const msalProviders = environment.useOauth ? [
+const msalProviders = [
   {
     provide: APP_INITIALIZER,
     useFactory: initializeMsalFactory,
@@ -78,7 +77,7 @@ const msalProviders = environment.useOauth ? [
   MsalService,
   MsalGuard,
   MsalBroadcastService
-] : [];
+];
 
 export const appConfig: ApplicationConfig = {
   providers: [

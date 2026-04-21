@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, Optional, output, signal } from "@angular/core";
+import { Component, DestroyRef, inject, output, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { SessionService } from "../../services/session.service";
 import { Session } from "../../model/session";
@@ -7,7 +7,6 @@ import { NgClass } from "@angular/common";
 import { SessionComponent } from "../session/session";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { MsalService } from "@azure/msal-angular";
-import { environment } from "../../environments/environment";
 
 
 @Component({
@@ -27,7 +26,7 @@ export class SideBar {
 
     sessionSelected = output<Session>();
 
-    constructor(@Optional() private authService: MsalService,
+    constructor(private authService: MsalService,
         private router: Router,
         private sessionService: SessionService,
         private stateService: StateService) { }
@@ -37,9 +36,6 @@ export class SideBar {
     }
 
     logout() {
-
-        if (!environment.useOauth)
-            this.router.navigate(['/'])
 
         this.authService.logoutRedirect();
     }

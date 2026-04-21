@@ -1,6 +1,5 @@
-import { Component, Inject, Optional, signal } from '@angular/core';
+import { Component, Inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { environment } from './environments/environment'
 
 // Required for MSAL
 import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfiguration } from '@azure/msal-angular';
@@ -19,20 +18,16 @@ import { filter, takeUntil } from 'rxjs/operators';
 export class App {
   protected readonly title = signal('Fraud');
   private readonly _destroying$ = new Subject<void>();
-  private useOauth: boolean = environment.useOauth;
   private loginDisplay: boolean = false;
   private tokenExpiration: string = '';
 
   constructor(
-    @Optional() @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
-    @Optional() private authService: MsalService,
-    @Optional() private msalBroadcastService: MsalBroadcastService
+    @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
+    private authService: MsalService,
+    private msalBroadcastService: MsalBroadcastService
   ) { }
 
   ngOnInit(): void {
-
-    // Fix — guard the entire block
-    if (!this.useOauth || !this.msalBroadcastService) return;
 
     this.authService.handleRedirectObservable().subscribe();
 
@@ -72,10 +67,6 @@ export class App {
   }
 
   setLoginDisplay() {
-
-    if (!this.useOauth)
-      return;
-
     this.loginDisplay = this.authService.instance.getAllAccounts().length > 0;
 
     // Set active account if not already set
@@ -90,10 +81,6 @@ export class App {
 
   // Log the user in with redirect
   login() {
-
-    if (!this.useOauth)
-      return;
-
     if (this.msalGuardConfig.authRequest) {
       this.authService.loginRedirect({ ...this.msalGuardConfig.authRequest } as RedirectRequest);
     } else {
@@ -103,10 +90,6 @@ export class App {
 
   // Log the user out
   logout() {
-
-    if (!this.useOauth)
-      return;
-
     this.authService.logoutRedirect();
   }
 
