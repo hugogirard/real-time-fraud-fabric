@@ -11,8 +11,7 @@ import { MsalService } from "@azure/msal-angular";
 })
 export class LoginPage {
 
-    constructor(private router: Router,
-        private authService: MsalService) { }
+    constructor(private router: Router, private authService: MsalService) { }
 
     ngOnInit() {
         if (this.authService.instance.getActiveAccount() || this.authService.instance.getAllAccounts().length > 0) {
