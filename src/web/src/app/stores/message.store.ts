@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { patchState, signalState, signalStore } from "@ngrx/signals";
+import { patchState, signalState } from "@ngrx/signals";
 import { FraudService } from "../services/fraud.service";
 import { HttpEventType } from "@angular/common/http";
 import { Message, Role } from "../model/message";
@@ -32,7 +32,11 @@ export class MessageStore {
     }
 
     newChat() {
-        this.addWelcomeMessage();
+        patchState(this.state, {
+            messages: [],
+            streamingContent: '',
+            isStreaming: false
+        });
     }
 
     sendMessage(prompt: string) {

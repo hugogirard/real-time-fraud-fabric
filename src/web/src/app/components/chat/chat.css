@@ -140,12 +140,20 @@
     max-width: 800px;
     width: 100%;
     margin: 0 auto;
+    overflow-anchor: none;
 }
 
 #message-list {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xl);
+}
+
+#message-list::after {
+    content: '';
+    display: block;
+    overflow-anchor: auto;
+    height: 1px;
 }
 
 /* Empty / Welcome state */
@@ -450,4 +458,24 @@
     .chat-input-area {
         padding: var(--spacing-m);
     }
+}
+
+.chat-new-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #555;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-new-btn:hover {
+    background: #f0f0f0;
+    border-color: #999;
 }

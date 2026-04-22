@@ -59,7 +59,7 @@
         </div>
 
         <!-- Typing indicator -->
-        @if (isTyping()) {
+        @if (isTyping() || (messageStore.isStreaming() && !messageStore.streamingContent())) {
         <div id="typing-indicator" class="typing-indicator visible">
             <span class="typing-dot"></span>
             <span class="typing-dot"></span>
@@ -71,6 +71,7 @@
     <!-- Chat Input -->
     <div id="chat-input-area" class="chat-input-area">
         <div class="chat-input-wrapper">
+            <button class="chat-new-btn" data-tooltip="New chat" title="New chat" (click)="onNewChat()">+</button>
             <input id="chat-input" class="chat-input" rows="1" placeholder="Type your message…" [value]="userMessage()"
                 [disabled]="messageStore.isStreaming()" (input)="userMessage.set($any($event.target).value)"
                 (keydown.enter)="onSend()" aria-label="Type your message" />

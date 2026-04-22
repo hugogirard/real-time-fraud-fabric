@@ -1,5 +1,4 @@
-import { Component, input, signal, effect, computed } from "@angular/core";
-import { Message, Role } from "../../model/message";
+import { Component, input, signal, effect, afterRenderEffect } from "@angular/core";
 import { Session } from "../../model/session";
 import { Loading } from "../loading/loading";
 import { MsalService } from "@azure/msal-angular";
@@ -18,7 +17,6 @@ import { RemarkModule } from "ngx-remark";
 export class Chat {
 
     session = input<Session>();
-    messages = signal<Message[]>([]);
     isLoading = signal(false);
     isTyping = signal(false);
     username: string | null = null;
@@ -29,6 +27,15 @@ export class Chat {
     Role = Role;
 
     constructor(public messageStore: MessageStore, private authService: MsalService) {
+
+        // Auto-scroll chat to bottom: tracks messages() and streamingContent() signals,
+        // then runs after DOM update to keep the latest content visible.
+        afterRenderEffect(() => {
+            this.messageStore.messages();
+            this.messageStore.streamingContent();
+            const el = document.getElementById('chat-messages');
+            if (el) el.scrollTop = el.scrollHeight;
+        });
 
         effect((onCleanup) => {
             const s = this.session();
@@ -42,6 +49,10 @@ export class Chat {
                 onCleanup(() => clearTimeout(timer));
             }
         });
+    }
+
+    onNewChat() {
+        this.messageStore.newChat();
     }
 
     ngOnInit() {
