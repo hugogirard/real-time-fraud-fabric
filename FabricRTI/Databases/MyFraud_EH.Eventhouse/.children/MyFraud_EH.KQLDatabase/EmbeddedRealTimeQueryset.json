@@ -1,0 +1,22 @@
+{
+  "queryset": {
+    "version": "1.0.0",
+    "dataSources": [
+      {
+        "id": "0e04f57c-2dc0-4dc3-9143-7154654cb4e7",
+        "clusterUri": "https://trd-7zrfeffcyzsvvtxbn2.z8.kusto.fabric.microsoft.com",
+        "type": "Fabric",
+        "databaseItemId": "4b4b5c3d-3a07-4c02-a5c7-a6cc0447d5c0",
+        "databaseItemName": "MyFraud_EH"
+      }
+    ],
+    "tabs": [
+      {
+        "id": "79dae100-b4aa-464c-9037-0dbe2601c284",
+        "content": "# ATTENTION: AI-generated code can include errors or operations you didn't intend. Review the code in this cell carefully before running it.\n\nCCTransactions\n| where is_fraud == \"1\"\n| join kind=inner (Customers | where display_name == \"Stephanie Miller\" | project user_id) on user_id\n| project amount, merchant_name, EventProcessedUtcTime, fraud_type",
+        "title": "KQL for Stephanie Miller",
+        "dataSourceId": "0e04f57c-2dc0-4dc3-9143-7154654cb4e7"
+      }
+    ]
+  }
+}
