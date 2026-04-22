@@ -20,6 +20,22 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     },
     cache: {
       cacheLocation: BrowserCacheLocation.LocalStorage
+    },
+    system: {
+      loggerOptions: {
+        loggerCallback: (level, message, containsPii) => {
+          if (containsPii) return;
+
+          // Look specifically for Interceptor or Token acquisition messages
+          if (message.includes("interceptor") || message.includes("token")) {
+            console.log(`%cMSAL: ${message}`, "color: #36ad6a; font-weight: bold;");
+          } else {
+            console.debug("MSAL:", message);
+          }
+        },
+        logLevel: LogLevel.Info, // Use LogLevel.Verbose for even more detail
+        piiLoggingEnabled: false
+      }
     }
   });
 }
@@ -28,7 +44,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string>>();
   protectedResourceMap.set('https://graph.microsoft.com/v1.0/me', ['user.read']);
-  protectedResourceMap.set(environment.apiBaseUrl, environment.apiScopes);
+  protectedResourceMap.set('http://localhost:7071', environment.apiScopes);
+  //protectedResourceMap.set(`${environment.apiBaseUrl}/`, environment.apiScopes);
   return {
     interactionType: InteractionType.Redirect,
     protectedResourceMap

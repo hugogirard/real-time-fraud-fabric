@@ -1,6 +1,4 @@
 import { Component, input, signal, effect, computed } from "@angular/core";
-import { DatePipe } from "@angular/common";
-import { FraudService } from "../../services/fraud.service";
 import { Message, Role } from "../../model/message";
 import { Session } from "../../model/session";
 import { Loading } from "../loading/loading";
@@ -15,17 +13,11 @@ import { RemarkModule } from "ngx-remark";
     standalone: true,
     styleUrl: './chat.css',
     templateUrl: './chat.html',
-    imports: [DatePipe, Loading, RemarkModule]
+    imports: [Loading, RemarkModule]
 })
 export class Chat {
 
     session = input<Session>();
-    private readonly welcomeMessage: Message = {
-        id: 'welcome',
-        role: Role.Assistant,
-        text: 'Hi, I am the assistant for Fraud Detection at Contoso Bank. How can I help you today?',
-        createdAt: new Date().toISOString()
-    };
     messages = signal<Message[]>([]);
     isLoading = signal(false);
     isTyping = signal(false);
@@ -45,7 +37,7 @@ export class Chat {
                 this.isTyping.set(true);
                 const timer = setTimeout(() => {
                     this.isTyping.set(false);
-                    this.messageStore.addWelcomeMessage(this.welcomeMessage.text);
+                    this.messageStore.addWelcomeMessage();
                 }, 2000);
                 onCleanup(() => clearTimeout(timer));
             }

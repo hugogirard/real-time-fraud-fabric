@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { patchState, signalState, signalStore } from "@ngrx/signals";
 import { FraudService } from "../services/fraud.service";
 import { HttpEventType } from "@angular/common/http";
+import { Message, Role } from "../model/message";
 
 
 @Injectable({
@@ -18,14 +19,20 @@ export class MessageStore {
         lastSessionInfo: null as any
     });
 
+    private readonly welcomeMessage: string = 'Hi, I am the assistant for Fraud Detection at Contoso Bank. How can I help you today?';
+
     readonly messages = this.state.messages;
     readonly streamingContent = this.state.streamingContent;
     readonly isStreaming = this.state.isStreaming;
 
-    addWelcomeMessage(content: string) {
+    addWelcomeMessage() {
         patchState(this.state, (state) => ({
-            messages: [...state.messages, { role: 'assistant', content }]
+            messages: [{ role: Role.Assistant, content: this.welcomeMessage }]
         }));
+    }
+
+    newChat() {
+        this.addWelcomeMessage();
     }
 
     sendMessage(prompt: string) {

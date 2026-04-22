@@ -137,9 +137,15 @@
     flex: 1;
     overflow-y: auto;
     padding: var(--spacing-xxl);
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+#message-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-l);
+    gap: var(--spacing-xl);
 }
 
 /* Empty / Welcome state */
@@ -238,6 +244,9 @@
     padding: var(--spacing-l) var(--spacing-xxl) var(--spacing-xl);
     background: var(--neutral-white);
     border-top: 1px solid var(--neutral-gray-30);
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .chat-input-wrapper {
@@ -326,7 +335,7 @@
 .message {
     display: flex;
     gap: var(--spacing-m);
-    max-width: 720px;
+    max-width: 85%;
 }
 
 .message.user {
