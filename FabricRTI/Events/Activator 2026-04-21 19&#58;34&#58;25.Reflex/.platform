@@ -1,12 +1,11 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
-    "type": "Notebook",
-    "displayName": "OLD_Generate_Credit_Card_Transactions",
-    "description": "New notebook"
+    "type": "Reflex",
+    "displayName": "Activator 2026-04-21 19:34:25"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "07a9e40e-01a4-bd97-4204-38fe40b51051"
+    "logicalId": "e4bc5fff-71db-9bd7-4dc8-9ee89c285d9f"
   }
 }

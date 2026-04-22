@@ -1,0 +1,14 @@
+[
+  {
+    "name": "creditcardcontracts",
+    "path": "/Files",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "fa45b42b-91b4-40e6-bb86-3e4a59c3fba2",
+        "location": "https://rtistoragedemo.dfs.core.windows.net",
+        "subpath": "/creditcardcontracts"
+      }
+    }
+  }
+]
