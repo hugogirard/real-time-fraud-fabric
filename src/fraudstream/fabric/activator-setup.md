@@ -12,12 +12,211 @@ to the affected customer** (with the Fraud Ops team CC'd).
 | Component | Details |
 |-----------|---------|
 | **Eventhouse** | KQL database with `Transactions` and `Customers` tables populated |
-| **Eventstream** | Streaming enriched fraud transactions (filtered to `is_fraud == 1`, joined with `Customers`, includes `fraud_history_html`) |
+| **Eventstream** | Raw credit-card transactions streaming in (e.g. from Event Hub) |
 | **Logic App** | Deployed via the Bicep template in `infra/` (provides the HTTP webhook URL) |
 
 ---
 
-## Step 1 — Create the Reflex Item
+## Part A — Configure the Eventstream (filtering, joins, fraud history)
+
+Before the Activator can receive enriched fraud events you need to build a
+processing pipeline **inside the Eventstream** that:
+
+1. Filters raw transactions to fraud only (`is_fraud == 1`)
+2. Joins with the `Customers` KQL table to get the customer email
+3. Looks up the last 10 fraudulent transactions and renders them as an HTML
+   table (`fraud_history_html`)
+4. Outputs the enriched events to a **derived stream** that the Activator
+   consumes
+
+### A.1 — Open the Eventstream
+
+1. In your **Fabric workspace**, open the Eventstream that ingests raw
+   credit-card transactions (e.g. `es-credit-card-transactions`).
+2. You should see your **source** (Event Hub / Custom App) on the left and
+   one or more destinations on the right.
+
+### A.2 — Add a "Filter" transformation (keep fraud only)
+
+1. In the Eventstream canvas, click the **Transform events** dropdown on the
+   toolbar and select **Filter**.
+2. Connect the input of the Filter node to your source.
+3. Configure the filter:
+
+   | Setting | Value |
+   |---------|-------|
+   | **Column** | `is_fraud` |
+   | **Operator** | `Equal to` |
+   | **Value** | `1` |
+
+4. Click **Apply**. The preview should show only fraudulent transactions.
+
+### A.3 — Add a "Join" transformation (enrich with customer data)
+
+> **Concept:** The Eventstream **Join** operator lets you join a real-time
+> stream against a KQL table stored in your Eventhouse. This is how we
+> attach the customer email, name, home location, and credit limit to each
+> fraud event.
+
+1. Click **Transform events → Join**.
+2. Connect the input of the Join node to the **output** of the Filter node
+   from Step A.2.
+3. For the **second input** (the reference / dimension side), click
+   **Add source → Eventhouse (KQL Database)** and select:
+   - Your **Eventhouse**
+   - Your **KQL database**
+   - Table: **`Customers`**
+4. Configure the join:
+
+   | Setting | Value |
+   |---------|-------|
+   | **Join type** | `Inner` |
+   | **Stream key** | `user_id` |
+   | **Table key** | `user_id` |
+
+5. In the **Output columns** panel, select (at minimum):
+
+   | From stream (Transactions) | From table (Customers) |
+   |----------------------------|------------------------|
+   | `transaction_id` | `display_name` |
+   | `user_id` | `email` |
+   | `amount` | `first_name` |
+   | `merchant_name` | `last_name` |
+   | `merchant_category` | `home_city` |
+   | `merchant_city` | `home_state` |
+   | `merchant_state` | `credit_limit` |
+   | `fraud_type` | |
+   | `distance_from_home_km` | |
+   | `hour_of_day` | |
+   | `day_of_week` | |
+   | `amount_zscore` | |
+   | `txn_count_last_1h` | |
+   | `txn_count_last_24h` | |
+   | `stream_timestamp` | |
+
+6. Click **Apply** and verify the preview shows customer fields alongside
+   each fraud transaction.
+
+### A.4 — Add a second "Join" transformation (attach fraud history HTML)
+
+> **Concept:** We need each fraud alert to include an HTML table of the
+> customer's last 10 fraud transactions. That table is pre-computed in the
+> Eventhouse using the KQL query in
+> [`fraud-detection-alert.kql`](./fraud-detection-alert.kql).
+
+#### A.4.1 — Create the materialized KQL view (one-time setup)
+
+In your **Eventhouse → KQL database**, run the following to create a
+**KQL function** that the Eventstream can reference:
+
+```kql
+.create-or-alter function FraudHistoryHtml() {
+    Transactions
+    | where is_fraud == 1
+    | sort by stream_timestamp desc
+    | extend row_html = strcat(
+        '<tr>',
+        '<td style="padding:6px 8px;border-bottom:1px solid #ecf0f1;">',
+            format_datetime(stream_timestamp, 'yyyy-MM-dd HH:mm'), '</td>',
+        '<td style="padding:6px 8px;border-bottom:1px solid #ecf0f1;color:#c0392b;font-weight:600;">$',
+            tostring(round(amount, 2)), '</td>',
+        '<td style="padding:6px 8px;border-bottom:1px solid #ecf0f1;">',
+            merchant_name, '</td>',
+        '<td style="padding:6px 8px;border-bottom:1px solid #ecf0f1;">',
+            merchant_city, ', ', merchant_state, '</td>',
+        '<td style="padding:6px 8px;border-bottom:1px solid #ecf0f1;">',
+            '<span style="display:inline-block;background:#fdf2f2;color:#c0392b;',
+            'font-weight:600;font-size:12px;padding:2px 10px;border-radius:4px;',
+            'border:1px solid #f5c6cb;">', fraud_type, '</span></td>',
+        '</tr>')
+    | summarize fraud_rows = make_list(row_html, 10) by user_id
+    | project user_id, fraud_history_html = strcat(
+        '<table style="width:100%;border-collapse:collapse;font-size:13px;">',
+        '<thead><tr style="background:#f8f9fa;">',
+        '<th style="text-align:left;padding:8px;border-bottom:2px solid #dee2e6;">Date</th>',
+        '<th style="text-align:left;padding:8px;border-bottom:2px solid #dee2e6;">Amount</th>',
+        '<th style="text-align:left;padding:8px;border-bottom:2px solid #dee2e6;">Merchant</th>',
+        '<th style="text-align:left;padding:8px;border-bottom:2px solid #dee2e6;">Location</th>',
+        '<th style="text-align:left;padding:8px;border-bottom:2px solid #dee2e6;">Type</th>',
+        '</tr></thead><tbody>',
+        strcat_array(fraud_rows, ''),
+        '</tbody></table>')
+}
+```
+
+#### A.4.2 — Add the join in the Eventstream
+
+1. Click **Transform events → Join**.
+2. Connect the input to the **output** of the Customer Join (Step A.3).
+3. For the **second input**, click **Add source → Eventhouse (KQL Database)**
+   and select:
+   - Your **Eventhouse**
+   - Your **KQL database**
+   - Function/Table: **`FraudHistoryHtml`** (the function you just created)
+4. Configure the join:
+
+   | Setting | Value |
+   |---------|-------|
+   | **Join type** | `Left outer` |
+   | **Stream key** | `user_id` |
+   | **Table key** | `user_id` |
+
+   > Use **Left outer** so events still flow even if no prior fraud history
+   > exists for a new customer.
+
+5. In the **Output columns**, keep all columns from the previous step and
+   add `fraud_history_html` from the KQL function.
+6. Click **Apply**.
+
+### A.5 — Add the Activator destination (derived stream)
+
+1. On the toolbar, click **Add destination → Activator**.
+2. Select the Activator item you will create in Part B (or create it now —
+   see Step 1 below).
+3. Click **Connect** and then **Publish** the Eventstream.
+
+### A.6 — Verify the pipeline
+
+Your Eventstream canvas should now look like this:
+
+```
+[Source: Event Hub]
+        │
+        ▼
+  ┌───────────┐
+  │  Filter   │  is_fraud == 1
+  └─────┬─────┘
+        │
+        ▼
+  ┌───────────────────────────────┐
+  │  Join (Inner)                 │◄── [Eventhouse: Customers table]
+  │  on user_id                   │
+  │  → adds email, display_name,  │
+  │    home_city, credit_limit…   │
+  └─────────────┬─────────────────┘
+                │
+                ▼
+  ┌───────────────────────────────┐
+  │  Join (Left outer)            │◄── [Eventhouse: FraudHistoryHtml()]
+  │  on user_id                   │
+  │  → adds fraud_history_html    │
+  └─────────────┬─────────────────┘
+                │
+                ▼
+  ┌─────────────────────┐
+  │  Destination:       │
+  │  Activator (Reflex) │
+  └─────────────────────┘
+```
+
+Click **Data preview** on the final node and confirm all expected columns
+are present (see the table in Step 2 of Part B below).
+
+---
+
+## Part B — Configure the Activator (Reflex)
+
+### Step 1 — Create the Reflex Item
 
 1. In your **Fabric workspace**, click **+ New item → Activator**.
 2. Name it `reflex-fraud-alerts`.
@@ -25,18 +224,11 @@ to the affected customer** (with the Fraud Ops team CC'd).
 
 ---
 
-## Step 2 — Connect to the Eventstream
+### Step 2 — Connect to the Eventstream
 
 1. In the Activator canvas, click **Get data → Eventstream**.
-2. Select your **Eventstream** that carries the enriched fraud events.
-
-   > **Important:** The Eventstream must already be configured to:
-   > - Filter transactions to `is_fraud == 1`
-   > - Join with the `Customers` table (to include `email`, `display_name`, etc.)
-   > - Include the `fraud_history_html` field (built by the KQL query in
-   >   [`fraud-detection-alert.kql`](./fraud-detection-alert.kql) and
-   >   materialized in the Eventhouse before being routed to the stream)
-
+2. Select the Eventstream you configured in **Part A** (the enriched fraud
+   stream with filter + customer join + fraud history).
 3. Verify the following columns are present in the Eventstream preview:
 
    | Column | Example |
@@ -54,7 +246,7 @@ to the affected customer** (with the Fraud Ops team CC'd).
 
 ---
 
-## Step 3 — Define the Trigger Object
+### Step 3 — Define the Trigger Object
 
 1. In the **Design** tab, under **Objects**, select `transaction_id` as the
    **unique key** for the object.
@@ -62,7 +254,7 @@ to the affected customer** (with the Fraud Ops team CC'd).
 
 ---
 
-## Step 4 — Create the Trigger Condition
+### Step 4 — Create the Trigger Condition
 
 1. Click **New Trigger** on the object.
 2. Name the trigger: `Fraud Detected`.
@@ -74,7 +266,7 @@ to the affected customer** (with the Fraud Ops team CC'd).
 
 ---
 
-## Step 5 — Configure the Action (Call Power Automate / Logic App)
+### Step 5 — Configure the Action (Call Power Automate / Logic App)
 
 1. Under the trigger, click **Act** → **Start a Power Automate flow**.
 
@@ -108,7 +300,7 @@ to the affected customer** (with the Fraud Ops team CC'd).
 
 ---
 
-## Step 6 — Activate the Trigger
+### Step 6 — Activate the Trigger
 
 1. Click **Start** (play button) on the Reflex item to activate monitoring.
 2. The Activator will now process events from the Eventstream in real time.
