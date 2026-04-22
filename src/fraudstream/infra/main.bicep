@@ -3,8 +3,12 @@
 // ============================================================
 // Deploys a Consumption Logic App with:
 //   1. HTTP trigger (webhook endpoint for Fabric Activator)
-//   2. Compose action (builds a rich HTML email body)
+//   2. Compose action (builds a rich HTML email body with
+//      fraud history and app link)
 //   3. Send email via Office 365 Outlook connector
+//
+// The email is sent TO the affected customer (email from the
+// Activator payload) and CC'd to the security/ops team.
 //
 // After deployment, authorize the Office 365 API connection
 // in the Azure Portal, then copy the Logic App callback URL
@@ -17,8 +21,11 @@ param location string = resourceGroup().location
 @description('Name prefix for resources.')
 param namePrefix string = 'fraud-alert'
 
-@description('Email address to receive fraud alert notifications.')
+@description('Security / Fraud Ops team email (CC recipient on every alert).')
 param alertRecipientEmail string
+
+@description('URL of the fraud investigation app. Use a placeholder until the app is deployed.')
+param appUrl string = 'https://YOUR-APP-URL-HERE.azurewebsites.net'
 
 // ── Variables ─────────────────────────────────────────────
 var logicAppName = '${namePrefix}-logic-app'
@@ -58,6 +65,10 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
           defaultValue: alertRecipientEmail
           type: 'String'
         }
+        appUrl: {
+          defaultValue: appUrl
+          type: 'String'
+        }
       }
       triggers: {
         When_Fabric_Activator_detects_fraud: {
@@ -89,6 +100,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
                 home_city: { type: 'string' }
                 home_state: { type: 'string' }
                 credit_limit: { type: 'number' }
+                fraud_history_html: { type: 'string' }
               }
             }
           }
@@ -121,6 +133,10 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   .risk-indicators h4 { margin: 0 0 8px; color: #e67e22; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
   .risk-indicators ul { margin: 0; padding-left: 18px; font-size: 13px; color: #7f6c3e; }
   .risk-indicators li { margin-bottom: 4px; }
+  .cta-section { text-align: center; margin: 28px 0 12px; }
+  .cta-button { display: inline-block; background: linear-gradient(135deg, #2980b9, #3498db); color: #ffffff; font-weight: 600; font-size: 15px; padding: 14px 36px; border-radius: 6px; text-decoration: none; letter-spacing: 0.3px; }
+  .cta-button:hover { background: linear-gradient(135deg, #1c6ea4, #2980b9); }
+  .cta-note { font-size: 12px; color: #95a5a6; margin-top: 8px; }
   .footer { background: #f8f9fa; padding: 18px 32px; text-align: center; font-size: 12px; color: #95a5a6; border-top: 1px solid #ecf0f1; }
   .footer a { color: #3498db; text-decoration: none; }
 </style>
@@ -169,13 +185,30 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
         <li><strong>Hour of day:</strong> @{triggerBody()?['hour_of_day']}:00</li>
       </ul>
     </div>
+
+    <!-- Recent Fraud History (last 10 fraudulent transactions) -->
+    <div class="section-title">Recent Fraud History</div>
+    <p style="font-size:13px;color:#7f8c8d;margin:0 0 12px;">
+      The following table shows the last 10 fraudulent transactions detected for this cardholder.
+    </p>
+    @{triggerBody()?['fraud_history_html']}
+
+    <!-- Call to Action — Investigate in App -->
+    <div class="cta-section">
+      <a href="@{parameters('appUrl')}?user_id=@{triggerBody()?['user_id']}&txn_id=@{triggerBody()?['transaction_id']}" class="cta-button">
+        Review in Fraud Investigation App
+      </a>
+      <p class="cta-note">Click the button above to review this case and take action.</p>
+    </div>
   </div>
 
   <!-- Footer -->
   <div class="footer">
     This alert was generated automatically by <strong>Fabric Real-Time Intelligence</strong>
     via Data Activator.<br/>
-    Investigate this transaction in the Fabric workspace or contact the Fraud Operations team.
+    Sent to <strong>@{triggerBody()?['email']}</strong> &bull;
+    Fraud Operations team CC'd.<br/>
+    <a href="@{parameters('appUrl')}">Open Fraud Investigation App</a>
   </div>
 </div>
 </body>
@@ -197,7 +230,8 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
             method: 'post'
             path: '/v2/Mail'
             body: {
-              To: '@{parameters(\'alertRecipientEmail\')}'
+              To: '@{triggerBody()?[\'email\']}'
+              Cc: '@{parameters(\'alertRecipientEmail\')}'
               Subject: 'FRAUD ALERT — $@{triggerBody()?[\'amount\']} at @{triggerBody()?[\'merchant_name\']} (@{triggerBody()?[\'display_name\']})'
               Body: '@{outputs(\'Compose_Email_Body\')}'
               IsHtml: true

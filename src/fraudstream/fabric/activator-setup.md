@@ -1,8 +1,9 @@
 # Fabric Activator (Reflex) Setup — Fraud Alert to Power Automate
 
 This guide walks through configuring a **Fabric Data Activator** (Reflex) item
-that monitors the Eventhouse for fraudulent transactions and triggers a
-**Power Automate / Azure Logic App** to send customized email alerts.
+that receives enriched fraud events from an **Eventstream** and triggers a
+**Power Automate / Azure Logic App** to send customized email alerts **directly
+to the affected customer** (with the Fraud Ops team CC'd).
 
 ---
 
@@ -11,7 +12,7 @@ that monitors the Eventhouse for fraudulent transactions and triggers a
 | Component | Details |
 |-----------|---------|
 | **Eventhouse** | KQL database with `Transactions` and `Customers` tables populated |
-| **Eventstream** | Streaming transactions into the Eventhouse |
+| **Eventstream** | Streaming enriched fraud transactions (filtered to `is_fraud == 1`, joined with `Customers`, includes `fraud_history_html`) |
 | **Logic App** | Deployed via the Bicep template in `infra/` (provides the HTTP webhook URL) |
 
 ---
@@ -24,41 +25,30 @@ that monitors the Eventhouse for fraudulent transactions and triggers a
 
 ---
 
-## Step 2 — Connect to the Eventhouse
+## Step 2 — Connect to the Eventstream
 
-1. In the Activator canvas, click **Get data → Eventhouse (KQL Database)**.
-2. Select your **Eventhouse** and **KQL database**.
-3. Paste the KQL query from [`fraud-detection-alert.kql`](./fraud-detection-alert.kql):
+1. In the Activator canvas, click **Get data → Eventstream**.
+2. Select your **Eventstream** that carries the enriched fraud events.
 
-```kql
-Transactions
-| where is_fraud == 1
-| join kind=inner Customers on user_id
-| project
-    transaction_id,
-    user_id,
-    display_name,
-    email,
-    first_name,
-    last_name,
-    amount,
-    merchant_name,
-    merchant_category,
-    merchant_city,
-    merchant_state,
-    fraud_type,
-    distance_from_home_km,
-    hour_of_day,
-    day_of_week,
-    amount_zscore,
-    txn_count_last_1h,
-    txn_count_last_24h,
-    stream_timestamp,
-    home_city,
-    home_state,
-    credit_limit
-| order by stream_timestamp desc
-```
+   > **Important:** The Eventstream must already be configured to:
+   > - Filter transactions to `is_fraud == 1`
+   > - Join with the `Customers` table (to include `email`, `display_name`, etc.)
+   > - Include the `fraud_history_html` field (built by the KQL query in
+   >   [`fraud-detection-alert.kql`](./fraud-detection-alert.kql) and
+   >   materialized in the Eventhouse before being routed to the stream)
+
+3. Verify the following columns are present in the Eventstream preview:
+
+   | Column | Example |
+   |--------|---------|
+   | `transaction_id` | `txn-00042` |
+   | `user_id` | `user-007` |
+   | `email` | `mark.johnson@contoso.com` |
+   | `display_name` | `Mark Johnson` |
+   | `amount` | `1245.99` |
+   | `merchant_name` | `TechGadgets Inc` |
+   | `fraud_type` | `card_not_present` |
+   | `fraud_history_html` | `<table>…</table>` |
 
 4. Click **Connect**.
 
@@ -103,7 +93,7 @@ Transactions
    |-------|-------------|
    | `transaction_id` | Unique fraud transaction ID |
    | `display_name` | Customer full name |
-   | `email` | Customer email (recipient) |
+   | `email` | Customer email (**used as the To: recipient**) |
    | `amount` | Transaction amount |
    | `merchant_name` | Merchant name |
    | `merchant_category` | Merchant category |
@@ -112,6 +102,7 @@ Transactions
    | `distance_from_home_km` | Distance from customer home |
    | `stream_timestamp` | When the transaction occurred |
    | `credit_limit` | Customer's credit limit |
+   | `fraud_history_html` | Pre-built HTML table of last 10 fraud txns |
 
 3. Click **Save**.
 
@@ -120,8 +111,8 @@ Transactions
 ## Step 6 — Activate the Trigger
 
 1. Click **Start** (play button) on the Reflex item to activate monitoring.
-2. The Activator will now evaluate the KQL query at the configured interval.
-3. When a fraud transaction is detected, it sends an HTTP POST to your Logic App,
+2. The Activator will now process events from the Eventstream in real time.
+3. When a fraud event arrives, it sends an HTTP POST to your Logic App,
    which formats and sends a customized email alert.
 
 ---
@@ -139,7 +130,7 @@ Transactions
 
 | Issue | Solution |
 |-------|----------|
-| No triggers firing | Verify the Reflex is **Started** and the Eventhouse has fraud data |
+| No triggers firing | Verify the Reflex is **Started** and the Eventstream is actively receiving fraud events |
 | HTTP 401/403 from Logic App | Check the Logic App callback URL is correct and active |
 | Emails not arriving | Verify the Office 365 API connection is authorized in the Logic App |
 | Duplicate alerts | Adjust the trigger's **time window** or add deduplication in the KQL query |

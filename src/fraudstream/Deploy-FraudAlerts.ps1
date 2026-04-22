@@ -22,6 +22,9 @@
 .PARAMETER AlertRecipientEmail
     Email address that receives fraud alert emails.
 
+.PARAMETER AppUrl
+    URL of the fraud investigation app. Default: placeholder URL.
+
 .PARAMETER NamePrefix
     Prefix for all resource names. Default: fraud-alert.
 
@@ -30,7 +33,8 @@
         -SubscriptionId "00000000-0000-0000-0000-000000000000" `
         -ResourceGroupName "rg-fraud-alerts" `
         -Location "eastus" `
-        -AlertRecipientEmail "security@contoso.com"
+        -AlertRecipientEmail "security@contoso.com" `
+        -AppUrl "https://my-fraud-app.azurewebsites.net"
 #>
 
 [CmdletBinding()]
@@ -46,6 +50,8 @@ param(
 
     [Parameter(Mandatory)]
     [string]$AlertRecipientEmail,
+
+    [string]$AppUrl = "https://YOUR-APP-URL-HERE.azurewebsites.net",
 
     [string]$NamePrefix = "fraud-alert"
 )
@@ -72,7 +78,7 @@ Write-Information "Deploying Logic App via Bicep..."
 $deploymentOutput = az deployment group create `
     --resource-group $ResourceGroupName `
     --template-file $bicepFile `
-    --parameters location=$Location namePrefix=$NamePrefix alertRecipientEmail=$AlertRecipientEmail `
+    --parameters location=$Location namePrefix=$NamePrefix alertRecipientEmail=$AlertRecipientEmail appUrl=$AppUrl `
     --query "properties.outputs" `
     --output json | ConvertFrom-Json
 
