@@ -1,0 +1,36 @@
+// ============================================================
+// Fraud Detection Alert — KQL Query for Fabric Activator
+// ============================================================
+// This query detects confirmed fraud transactions in real-time
+// by joining the Transactions stream with the Customers table.
+// Use this as the source query for a Fabric Activator (Reflex)
+// trigger that fires when is_fraud == 1.
+// ============================================================
+
+Transactions
+| where is_fraud == 1
+| join kind=inner Customers on user_id
+| project
+    transaction_id,
+    user_id,
+    display_name,
+    email,
+    first_name,
+    last_name,
+    amount,
+    merchant_name,
+    merchant_category,
+    merchant_city,
+    merchant_state,
+    fraud_type,
+    distance_from_home_km,
+    hour_of_day,
+    day_of_week,
+    amount_zscore,
+    txn_count_last_1h,
+    txn_count_last_24h,
+    stream_timestamp,
+    home_city,
+    home_state,
+    credit_limit
+| order by stream_timestamp desc
