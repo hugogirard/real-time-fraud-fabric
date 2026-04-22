@@ -18,7 +18,7 @@
                     <span class="chat-user-name">{{username}}</span>
                 </div>
                 <div class="chat-user-avatar">{{initial}}</div>
-                <button class="chat-logout-btn" title="Sign out">
+                <button class="chat-logout-btn" title="Sign out" (click)="logout()">
                     <img src="images/logout-icon.svg" alt="Sign out icon" />
                     <span>Sign out</span>
                 </button>
@@ -33,7 +33,7 @@
         <div id="message-list">
             @for (msg of messageStore.messages(); track $index) {
             <div class="message" [class.bot]="msg.role === 'assistant'" [class.user]="msg.role === 'user'">
-                <div class="message-avatar">{{ msg.role === 'assistant' ? 'CB' : 'JD' }}</div>
+                <div class="message-avatar">{{ msg.role === 'assistant' ? 'CB' : initial }}</div>
                 <div class="message-content">
                     <div class="message-bubble">
                         @if (msg.role === 'assistant') {

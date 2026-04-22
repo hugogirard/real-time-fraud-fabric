@@ -44,8 +44,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string>>();
   protectedResourceMap.set('https://graph.microsoft.com/v1.0/me', ['user.read']);
-  protectedResourceMap.set('http://localhost:7071', environment.apiScopes);
-  //protectedResourceMap.set(`${environment.apiBaseUrl}/`, environment.apiScopes);
+  //protectedResourceMap.set('http://localhost:7071/*', environment.apiScopes);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/*`, environment.apiScopes);
   return {
     interactionType: InteractionType.Redirect,
     protectedResourceMap

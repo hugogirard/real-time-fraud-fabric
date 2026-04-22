@@ -73,4 +73,8 @@ export class Chat {
             this.userMessage.set('');;
         }
     }
+
+    logout() {
+        this.authService.logoutRedirect();
+    }
 }
