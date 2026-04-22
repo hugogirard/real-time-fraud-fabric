@@ -24,7 +24,6 @@ export class Chat {
     userMessage = signal('');
 
     readonly loadingTitle = 'Loading conversation';
-    Role = Role;
 
     constructor(public messageStore: MessageStore, private authService: MsalService) {
 
