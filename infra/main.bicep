@@ -21,6 +21,15 @@ param userPrincipalId string = ''
 @description('The publisher email for notification in APIM')
 param publisherEmail string
 
+@description('OAuth2 permission ID for the function')
+param oauth2FuncId string = newGuid()
+
+@description('Client ID of the angular app if already exist (only use multi deployment)')
+param webAppClientId string = ''
+
+@description('Client ID of the function app if already exist (only use multi deployment)')
+param funcAppClientId string = ''
+
 var abbrs = loadJsonContent('./abbreviations.json')
 
 var tags = {
@@ -125,12 +134,16 @@ module serverFarm 'core/web/webapp.bicep' = {
   }
 }
 
-module webAppRegistration 'core/entraID/app.registration.bicep' = {
+module webAppRegistration 'core/entraID/app.registration.bicep' = if (empty(webAppClientId)) {
   scope: rg
   params: {
     appDisplayName: 'Fraud Detection Angular App'
     appUniqueName: frontEndResourceName
     requiredResourcceAccess: requiredResourceAccess
+    spaRedirectUris: [
+      'https://${serverFarm.outputs.frontEndWebAppName}.azurewebsites.net'
+      'http://localhost:4200'
+    ]
   }
 }
 
@@ -197,12 +210,24 @@ module ai_user_foundry 'core/rbac/rbac.bicep' = {
 // Create app registration for the function
 var functionResourceName = '${abbrs.webSitesFunctions}${resourceToken}'
 
-module appRegistrationFunction 'core/entraID/app.registration.bicep' = {
+module appRegistrationFunction 'core/entraID/app.registration.bicep' = if (empty(funcAppClientId)) {
   scope: rg
   params: {
     appDisplayName: 'Fraud-Agent-Function'
     appUniqueName: functionResourceName
     requiredResourcceAccess: requiredResourceAccess
+    oauth2PermissionScopes: [
+      {
+        id: oauth2FuncId
+        adminConsentDescription: 'Allow the application to access chatbot on behalf of the signed-in user.'
+        adminConsentDisplayName: 'Access chatbot'
+        isEnabled: true
+        type: 'User'
+        userConsentDescription: 'Allow the application to access chatbot on your behalf.'
+        userConsentDisplayName: 'Access chatbot'
+        value: 'user_impersonation'
+      }
+    ]
   }
 }
 
@@ -219,6 +244,7 @@ module function 'core/function/function.bicep' = {
     appInsightResourceName: monitoring.outputs.insightResourceName
     foundryResourceName: foundry.outputs.resourceName
     appRegistrationClientId: appRegistrationFunction.outputs.applicationId
+    allowedAudiences: appRegistrationFunction.outputs.identifierUris
   }
 }
 
@@ -240,3 +266,9 @@ output FOUNDRY_RESOURCE_NAME string = foundry.outputs.resourceName
 output PROJECT_ENDPOINT string = foundry.outputs.projectEndpoint
 output PROJECT_RESOURCE_NAME string = foundry.outputs.projectResourceName
 output CHAT_COMPLETION_DEPLOYMENT_MODEL string = chatCompletionModelDeployment.outputs.deploymentModelName
+output FRONTEND_CLIENTID string = empty(webAppClientId) ? webAppRegistration.outputs.applicationId : webAppClientId
+output AUTHORITY string = 'https://login.microsoftonline.com/${tenant().tenantId}'
+output FUNCTION_SCOPE string = 'api://${functionResourceName}/user_impersonation'
+output FUNCTION_BASE_URL string = 'https://${functionResourceName}.azurewebsites.net'
+output FRONTEND_REDIRECT_URL string = 'https://${frontEndResourceName}.azurewebsites.net'
+output APPLICATION_INSIGHTS_KEY string = monitoring.outputs.key

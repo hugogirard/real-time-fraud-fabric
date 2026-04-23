@@ -20,17 +20,19 @@ hooks:
   preprovision:
     posix:
       shell: sh
-      run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o
-        tsv)
+      run: ./scripts/pre-hook.sh
       continueOnError: false
     windows:
       shell: pwsh
-      run: azd env set USER_PRINCIPAL_ID $(az ad signed-in-user show --query id -o
-        tsv)
+      run: ./scripts/pre-hook.ps1
       continueOnError: false
 
-#   postprovision:
-#     windows:
-#       shell: pwsh
-#       continueOnError: false
-#       run: ./scripts/deploy-apps.ps1
+  postprovision:
+    posix:
+      shell: sh
+      run: ./scripts/post-hook.sh
+      continueOnError: false
+    windows:
+      shell: pwsh
+      run: ./scripts/post-hook.ps1
+      continueOnError: false
