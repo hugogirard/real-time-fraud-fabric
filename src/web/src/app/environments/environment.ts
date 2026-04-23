@@ -1,9 +1,10 @@
 export const environment = {
     production: false,
-    clientId: 'a09816e5-4d88-4c5e-99fc-7fbdd63ac54b',
+    clientId: '3b8c6de0-058a-44f8-9ece-ce5609568cbc',
     authority: 'https://login.microsoftonline.com/5e457c85-d7f3-4cd9-9ac6-e544a610a955',
-    apiScopes: ['api://1f1562f5-ef42-485f-927c-0736e26229c9/user_impersonation'],
+    apiScopes: ['api://func-hu3zkdtbqdczk/user_impersonation'],
     apiBaseUrl: 'http://localhost:7071',
-    redirectUrl: 'http://localhost:4200'
+    redirectUrl: 'http://localhost:4200',
+    appInsightKey: 'InstrumentationKey=3102538d-1cd8-4b8a-9c7b-a0a7bb27d112;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=85b838d1-6a66-4891-9f6b-aa79140057bb'
 }
 

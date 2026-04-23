@@ -6,6 +6,7 @@ import { Loading } from "../../components/loading/loading";
 import { StateService } from "../../services/state.service";
 import { Constant } from "../../infrastructure/constants";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { MessageStore } from "../../stores/message.store";
 
 @Component({
     selector: 'fraud',
@@ -19,19 +20,14 @@ export class FraudPage {
     selectedSession = signal<Session | undefined>(undefined);
     isLoading = signal(false);
 
-    private destroyRef = inject(DestroyRef);
-
-    constructor(private sessionService: SessionService, private stateService: StateService) {
+    constructor(private messageStore: MessageStore) {
     }
 
     ngOnInit() {
         this.isLoading.set(true);
-        this.sessionService.createNewSession()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(session => {
-                this.selectedSession.set(session);
-                this.stateService.setItem(Constant.SESSION_KEY, session);
-                this.isLoading.set(false);
-            });
+        this.messageStore.newSession().subscribe({
+            next: () => this.isLoading.set(false),
+            error: () => this.isLoading.set(false)
+        });
     }
 }

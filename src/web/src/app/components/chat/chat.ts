@@ -51,7 +51,11 @@ export class Chat {
     }
 
     onNewChat() {
-        this.messageStore.newChat();
+        this.isLoading.set(true);
+        this.messageStore.newSession().subscribe({
+            next: () => this.isLoading.set(false),
+            error: () => this.isLoading.set(false)
+        });
     }
 
     ngOnInit() {

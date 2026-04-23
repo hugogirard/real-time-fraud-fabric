@@ -8,6 +8,7 @@ import { EventMessage, EventType, InteractionStatus, RedirectRequest } from '@az
 // Required for RJXS
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
+import { MonitoringService } from './services/monitoring.service';
 
 @Component({
   selector: 'app-root',
@@ -24,7 +25,8 @@ export class App {
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
     private authService: MsalService,
-    private msalBroadcastService: MsalBroadcastService
+    private msalBroadcastService: MsalBroadcastService,
+    private monitoringService: MonitoringService
   ) { }
 
   ngOnInit(): void {
@@ -38,11 +40,6 @@ export class App {
       )
       .subscribe(() => {
         this.setLoginDisplay();
-
-        // Add this: Force login if user is not authenticated
-        if (!this.loginDisplay) {
-          this.login();
-        }
       });
 
 

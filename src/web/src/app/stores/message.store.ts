@@ -3,6 +3,8 @@ import { patchState, signalState } from "@ngrx/signals";
 import { FraudService } from "../services/fraud.service";
 import { HttpEventType } from "@angular/common/http";
 import { Message, Role } from "../model/message";
+import { SessionService } from "../services/session.service";
+import { map, Observable, tap } from "rxjs";
 
 
 @Injectable({
@@ -10,7 +12,7 @@ import { Message, Role } from "../model/message";
 })
 export class MessageStore {
 
-    constructor(private fraudService: FraudService) { }
+    constructor(private fraudService: FraudService, private sessionService: SessionService) { }
 
     private state = signalState({
         messages: [] as { role: string; content: string }[],
@@ -31,12 +33,30 @@ export class MessageStore {
         }));
     }
 
-    newChat() {
+    // newChat() {
+    //     patchState(this.state, {
+    //         messages: [],
+    //         streamingContent: '',
+    //         isStreaming: false
+    //     });
+    // }
+
+    newSession(): Observable<true> {
+
         patchState(this.state, {
             messages: [],
             streamingContent: '',
-            isStreaming: false
+            isStreaming: false,
+            lastSessionInfo: null
         });
+
+        return this.sessionService.createNewSession().pipe(
+            tap((session) => patchState(this.state, {
+                messages: [{ role: Role.Assistant, content: this.welcomeMessage }],
+                lastSessionInfo: session
+            })),
+            map(() => true));
+
     }
 
     sendMessage(prompt: string) {
@@ -46,7 +66,7 @@ export class MessageStore {
             isStreaming: true
         }));
 
-        this.fraudService.askQuestion(prompt).subscribe({
+        this.fraudService.askQuestion(prompt, this.state.lastSessionInfo()).subscribe({
             next: (event) => {
                 if (event.type === HttpEventType.DownloadProgress) {
                     const rawData = (event as any).partialText;
