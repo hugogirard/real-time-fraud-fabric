@@ -1,11 +1,11 @@
-first_name,last_name,home_city,home_state,country_code,email
-Mark,Johnson,Porto Alegre,RS,BR,mark.johnson@MngEnvMCAP530541.onmicrosoft.com
-Daniel,Doyle,Indianapolis,IN,US,daniel.doyle@MngEnvMCAP530541.onmicrosoft.com
-Stephanie,Miller,Belo Horizonte,MG,BR,stephanie.miller@MngEnvMCAP530541.onmicrosoft.com
-Allen,Robinson,Columbus,OH,US,allen.robinson@MngEnvMCAP530541.onmicrosoft.com
-Alexander,Gonzalez,Brasília,DF,BR,alexander.gonzalez@MngEnvMCAP530541.onmicrosoft.com
-Kimberly,Robinson,Calgary,AB,CA,kimberly.robinson@MngEnvMCAP530541.onmicrosoft.com
-Rhonda,Smith,Atlanta,GA,US,rhonda.smith@MngEnvMCAP530541.onmicrosoft.com
-Michael,Peterson,San Antonio,TX,US,michael.peterson@MngEnvMCAP530541.onmicrosoft.com
-Tina,Rogers,Boston,MA,US,tina.rogers@MngEnvMCAP530541.onmicrosoft.com
-Brent,Abbott,Minneapolis,MN,US,brent.abbott@MngEnvMCAP530541.onmicrosoft.com
+user_id,first_name,last_name,display_name,user_principal_name,email,age,gender,street_address,home_city,home_state,postal_code,country_code,country,home_lat,home_lon,credit_limit,account_created
+U0001,Mark,Johnson,Mark Johnson,mark.johnson@MngEnvMCAP530541.onmicrosoft.com,mark.johnson@MngEnvMCAP530541.onmicrosoft.com,45,M,4521 Av. Brasil,Porto Alegre,RS,90000-000,BR,Brazil,-30.0872,-51.2654,15000.00,2022-03-15
+U0002,Daniel,Doyle,Daniel Doyle,daniel.doyle@MngEnvMCAP530541.onmicrosoft.com,daniel.doyle@MngEnvMCAP530541.onmicrosoft.com,34,M,1287 Oak Ave,Indianapolis,IN,46201,US,United States,39.8201,-86.0914,10000.00,2021-07-22
+U0003,Stephanie,Miller,Stephanie Miller,stephanie.miller@MngEnvMCAP530541.onmicrosoft.com,stephanie.miller@MngEnvMCAP530541.onmicrosoft.com,52,F,3694 Rua das Flores,Belo Horizonte,MG,30100-000,BR,Brazil,-19.8523,-43.8712,20000.00,2023-01-08
+U0004,Allen,Robinson,Allen Robinson,allen.robinson@MngEnvMCAP530541.onmicrosoft.com,allen.robinson@MngEnvMCAP530541.onmicrosoft.com,41,M,7823 Maple Dr,Columbus,OH,43085,US,United States,40.0145,-83.0523,7500.00,2020-11-30
+U0005,Alexander,Gonzalez,Alexander Gonzalez,alexander.gonzalez@MngEnvMCAP530541.onmicrosoft.com,alexander.gonzalez@MngEnvMCAP530541.onmicrosoft.com,29,M,2156 Rua Augusta,Brasília,DF,70000-000,BR,Brazil,-15.7312,-47.9456,5000.00,2022-09-14
+U0006,Kimberly,Robinson,Kimberly Robinson,kimberly.robinson@MngEnvMCAP530541.onmicrosoft.com,kimberly.robinson@MngEnvMCAP530541.onmicrosoft.com,38,F,5437 King St,Calgary,AB,T2P 1J9,CA,Canada,51.0982,-114.1234,30000.00,2021-04-19
+U0007,Rhonda,Smith,Rhonda Smith,rhonda.smith@MngEnvMCAP530541.onmicrosoft.com,rhonda.smith@MngEnvMCAP530541.onmicrosoft.com,55,F,891 Park Blvd,Atlanta,GA,30301,US,United States,33.6934,-84.4512,50000.00,2020-06-07
+U0008,Michael,Peterson,Michael Peterson,michael.peterson@MngEnvMCAP530541.onmicrosoft.com,michael.peterson@MngEnvMCAP530541.onmicrosoft.com,47,M,3456 Elm St,San Antonio,TX,78201,US,United States,29.3578,-98.5432,15000.00,2023-05-21
+U0009,Tina,Rogers,Tina Rogers,tina.rogers@MngEnvMCAP530541.onmicrosoft.com,tina.rogers@MngEnvMCAP530541.onmicrosoft.com,31,F,6742 Broadway,Boston,MA,02101,US,United States,42.4123,-71.1023,10000.00,2022-12-03
+U0010,Brent,Abbott,Brent Abbott,brent.abbott@MngEnvMCAP530541.onmicrosoft.com,brent.abbott@MngEnvMCAP530541.onmicrosoft.com,63,M,2198 Cedar Ln,Minneapolis,MN,55401,US,United States,44.9234,-93.3187,20000.00,2021-08-26
