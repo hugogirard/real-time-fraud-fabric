@@ -1,0 +1,22 @@
+{
+  "queryset": {
+    "version": "1.0.0",
+    "dataSources": [
+      {
+        "id": "f91aa8ab-c36b-4d41-b675-3784180c9342",
+        "clusterUri": "",
+        "type": "Fabric",
+        "databaseItemId": "0447d5c0-a6cc-a5c7-4c02-3a074b4b5c3d",
+        "databaseItemName": "MyFraud_EH"
+      }
+    ],
+    "tabs": [
+      {
+        "id": "ec75d8dd-72ef-448c-972b-d63215281101",
+        "content": "fraud_alerts\n| where EventProcessedUtcTime > ago(5m)\n| project transaction_id, user_id, amount, merchant_name, EventProcessedUtcTime, customerName, customerEmail\n",
+        "title": "",
+        "dataSourceId": "f91aa8ab-c36b-4d41-b675-3784180c9342"
+      }
+    ]
+  }
+}

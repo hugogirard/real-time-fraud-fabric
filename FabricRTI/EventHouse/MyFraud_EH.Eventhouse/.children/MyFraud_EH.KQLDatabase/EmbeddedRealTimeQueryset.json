@@ -12,9 +12,9 @@
     ],
     "tabs": [
       {
-        "id": "79dae100-b4aa-464c-9037-0dbe2601c284",
-        "content": "# ATTENTION: AI-generated code can include errors or operations you didn't intend. Review the code in this cell carefully before running it.\n\nCCTransactions\n| where is_fraud == \"1\"\n| join kind=inner (Customers | where display_name == \"Stephanie Miller\" | project user_id) on user_id\n| project amount, merchant_name, EventProcessedUtcTime, fraud_type",
-        "title": "KQL for Stephanie Miller",
+        "id": "226d73f8-e24e-43cd-b781-60554613681e",
+        "content": ".create table fraud_alerts (\n    transaction_id: string,\n    user_id: string,\n    amount: real,\n    merchant_name: string,\n    EventProcessedUtcTime: datetime,\n    customerName: string,\n    customerEmail: string\n)\n\n.alter table CCTransactions policy streamingingestion '{\"IsEnabled\": false}'\n\n.alter table fraud_alerts policy update\n@'[{\"IsEnabled\": true, \"Source\": \"CCTransactions\", \"Query\": \"FraudEnrichment()\", \"IsTransactional\": true}]'\n\n.alter table CCTransactions policy streamingingestion '{\"IsEnabled\": true}'\n\n\n\n.create-or-alter function FraudEnrichment() {\n    CCTransactions\n    | where is_fraud == 1\n    | join kind=inner (\n        Customers\n        | project user_id, customerName = strcat(first_name, \" \", last_name) , customerEmail = email\n    ) on user_id\n    | project \n        transaction_id,\n        user_id,\n        amount,\n        merchant_name,\n        EventProcessedUtcTime,\n        customerName,\n        customerEmail\n}\n\n// Use 'take' to view a sample number of records in the table and check the data.\nfraud_alerts\n\n",
+        "title": "Eventhouse_prep",
         "dataSourceId": "0e04f57c-2dc0-4dc3-9143-7154654cb4e7"
       }
     ]

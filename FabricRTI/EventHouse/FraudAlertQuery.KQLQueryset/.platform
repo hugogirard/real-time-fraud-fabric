@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "KQLQueryset",
+    "displayName": "FraudAlertQuery",
+    "description": "FraudAlertQuery"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "1510f9a8-c534-acae-400f-9582ac0e134c"
+  }
+}

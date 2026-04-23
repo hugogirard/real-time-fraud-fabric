@@ -34,28 +34,129 @@
         {
           "name": "CreditCardTransactions_es-stream",
           "schema": {
-            "columns": []
+            "columns": [
+              {
+                "name": "transaction_id",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "user_id",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "stream_timestamp",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "amount",
+                "type": "Float",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "merchant_name",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "merchant_category",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "merchant_city",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "merchant_state",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "merchant_lat",
+                "type": "Float",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "merchant_lon",
+                "type": "Float",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "is_fraud",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "fraud_type",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "distance_from_home_km",
+                "type": "Float",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "hour_of_day",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "day_of_week",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "time_since_last_txn_sec",
+                "type": "BigInt",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "rolling_avg_amount",
+                "type": "Float",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "amount_zscore",
+                "type": "Float",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "txn_count_last_1h",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              },
+              {
+                "name": "txn_count_last_24h",
+                "type": "Nvarchar(max)",
+                "fields": null,
+                "items": null
+              }
+            ]
           }
-        }
-      ]
-    },
-    {
-      "id": "a1153e86-e940-4661-8981-336d0ccd3bfa",
-      "name": "MJHhyyjkRSYjw4yMaqK5tM-9c285d9f-9ee8-4dc8-9bd7-71dbe4bc5fff",
-      "type": "Activator",
-      "properties": {
-        "workspaceId": "00000000-0000-0000-0000-000000000000",
-        "itemId": "e4bc5fff-71db-9bd7-4dc8-9ee89c285d9f",
-        "inputSerialization": {
-          "type": "Json",
-          "properties": {
-            "encoding": "UTF8"
-          }
-        }
-      },
-      "inputNodes": [
-        {
-          "name": "CreditCardTransactions_es-stream"
         }
       ]
     }
