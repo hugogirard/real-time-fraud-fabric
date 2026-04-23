@@ -85,33 +85,42 @@ The `Customers` table is loaded from `customers.csv` with the schema:
 
 ---
 
-## Step 1 — Customers table (already deployed)
+## Quick Start
 
-The `Customers` table was created and populated during deployment with
-10 rows (`U0001`…`U0010`) matching the `user_id` values in
-`CCTransactions`. Verify any time with:
+Run the deployment script to create the Reflex item and discover existing
+resources:
 
-```kql
-Customers | take 5
+```powershell
+# Fabric-only deployment (Data Activator built-in email)
+.\Deploy-FraudAlerts.ps1 `
+    -FabricWorkspaceName "FraudDemo" `
+    -KqlDatabaseName "MyFraud_EH" `
+    -EventstreamName "CreditCardTransactions_es"
 ```
 
-If you need to re-create it, the schema is:
+Or with the optional Azure Logic App for advanced HTML emails:
 
-```kql
-.create table Customers (
-    user_id: string,
-    first_name: string,
-    last_name: string,
-    email: string,
-    home_city: string,
-    home_state: string,
-    country_code: string
-)
+```powershell
+.\Deploy-FraudAlerts.ps1 `
+    -FabricWorkspaceName "FraudDemo" `
+    -KqlDatabaseName "MyFraud_EH" `
+    -EventstreamName "CreditCardTransactions_es" `
+    -DeployLogicApp `
+    -SubscriptionId "<your-subscription-id>" `
+    -ResourceGroupName "rg-fraud-alerts" `
+    -AlertRecipientEmail "security@contoso.com"
 ```
+
+The script will:
+1. Authenticate via Azure CLI
+2. Find the workspace, KQL database, and Eventstream
+3. Create the Reflex item (if it doesn't exist)
+4. (Optional) Deploy the Azure Logic App
+5. Output portal links and remaining manual configuration steps
 
 ---
 
-## Step 2 — Connect the Reflex to the Eventstream
+## Step 1 — Connect the Reflex to the Eventstream
 
 The Reflex `rx-fraud-alerts` already exists in `FraudDemo`. Open it and:
 
@@ -125,7 +134,7 @@ The Reflex `rx-fraud-alerts` already exists in `FraudDemo`. Open it and:
 
 ---
 
-## Step 3 — Define KQL-backed properties on the object
+## Step 2 — Define KQL-backed properties on the object
 
 Properties are how Data Activator pulls reference + historical data
 without requiring a join in the stream. Each property is re-evaluated
@@ -133,7 +142,7 @@ when a rule condition is met.
 
 Open the object → **Properties → + New property → KQL query**.
 
-### 3a. `email`
+### 2a. `email`
 
 ```kql
 let uid = toscalar(Stream | project user_id | take 1);
@@ -143,7 +152,7 @@ Customers
 | take 1
 ```
 
-### 3b. `customer_name`
+### 2b. `customer_name`
 
 ```kql
 let uid = toscalar(Stream | project user_id | take 1);
@@ -153,7 +162,7 @@ Customers
 | take 1
 ```
 
-### 3c. `last_5_frauds_html`
+### 2c. `last_5_frauds_html`
 
 This property builds a complete HTML `<table>` of the customer's 5 most
 recent fraudulent transactions. Because it's computed only when the
@@ -187,7 +196,7 @@ strcat(
 )
 ```
 
-### 3d. `investigation_url`
+### 2d. `investigation_url`
 
 Make this a **static / text property** (not KQL). Value:
 
@@ -201,7 +210,7 @@ any code.
 
 ---
 
-## Step 4 — Create the trigger rule
+## Step 3 — Create the trigger rule
 
 1. On the object, click **+ New rule → When each event happens**.
 2. **Condition:** `is_fraud == "1"` (the column is a string in this
@@ -258,7 +267,7 @@ any code.
 
 ---
 
-## Step 5 — Start the rule and test
+## Step 4 — Start the rule and test
 
 1. Click **Start** on the rule.
 2. Run `Generate_Credit_Card_Transactions.ipynb` to stream transactions.
