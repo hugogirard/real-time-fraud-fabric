@@ -435,6 +435,95 @@
     margin-bottom: var(--spacing-xs);
 }
 
+/* --- Markdown (ngx-remark) typography --- */
+.message-bubble ::ng-deep p {
+    margin: 0;
+}
+
+.message-bubble ::ng-deep p+p {
+    margin-top: 0.5em;
+}
+
+.message-bubble ::ng-deep strong {
+    font-weight: var(--font-weight-bold);
+}
+
+.message-bubble ::ng-deep ol,
+.message-bubble ::ng-deep ul {
+    margin: var(--spacing-s) 0;
+    padding-left: var(--spacing-xl);
+}
+
+.message-bubble ::ng-deep li {
+    margin-bottom: var(--spacing-xs);
+}
+
+.message-bubble ::ng-deep h1,
+.message-bubble ::ng-deep h2,
+.message-bubble ::ng-deep h3,
+.message-bubble ::ng-deep h4 {
+    margin: 0.75em 0 0.25em;
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.3;
+}
+
+.message-bubble ::ng-deep h1 {
+    font-size: var(--font-size-xl);
+}
+
+.message-bubble ::ng-deep h2 {
+    font-size: var(--font-size-lg);
+}
+
+.message-bubble ::ng-deep h3 {
+    font-size: var(--font-size-md);
+}
+
+.message-bubble ::ng-deep code {
+    background: var(--neutral-gray-20);
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9em;
+}
+
+.message-bubble ::ng-deep pre {
+    background: var(--neutral-gray-10);
+    padding: var(--spacing-m);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    margin: var(--spacing-s) 0;
+}
+
+.message-bubble ::ng-deep pre code {
+    background: none;
+    padding: 0;
+}
+
+.message-bubble ::ng-deep blockquote {
+    border-left: 3px solid var(--neutral-gray-40);
+    padding-left: var(--spacing-m);
+    margin: var(--spacing-s) 0;
+    color: var(--neutral-gray-80);
+}
+
+.message-bubble ::ng-deep table {
+    border-collapse: collapse;
+    margin: var(--spacing-s) 0;
+    width: 100%;
+}
+
+.message-bubble ::ng-deep th,
+.message-bubble ::ng-deep td {
+    border: 1px solid var(--neutral-gray-30);
+    padding: var(--spacing-xs) var(--spacing-s);
+    text-align: left;
+}
+
+.message-bubble ::ng-deep th {
+    background: var(--neutral-gray-10);
+    font-weight: var(--font-weight-semibold);
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .chat-page {
