@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Deploys the Real-Time Fraud Alert solution to Microsoft Fabric and (optionally) Azure.
 
@@ -302,7 +302,7 @@ if ($DeployLogicApp) {
     }
     
     # Deploy Bicep
-    $bicepFile = Join-Path $ScriptRoot "infra" "main.bicep"
+    $bicepFile = Join-Path (Join-Path $ScriptRoot "infra") "main.bicep"
     if (-not (Test-Path $bicepFile)) {
         throw "Bicep template not found: $bicepFile"
     }
