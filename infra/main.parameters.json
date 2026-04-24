@@ -19,6 +19,9 @@
     },
     "publisherEmail": {
       "value": "${PUBLISHER_EMAIL}"
+    },
+    "oauth2FuncId": {
+      "value": "${OAUTH2_FUNC_ID}"
     }
   }
 }

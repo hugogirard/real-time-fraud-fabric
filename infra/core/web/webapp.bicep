@@ -2,6 +2,7 @@ param appServicePlanResourceName string
 param location string
 //param agentWebAppName string
 param frontEndWebAppName string
+param acrName string
 
 resource asp 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: appServicePlanResourceName
@@ -16,38 +17,9 @@ resource asp 'Microsoft.Web/serverfarms@2024-11-01' = {
   }
 }
 
-// resource fraudAgent 'Microsoft.Web/sites@2025-03-01' = {
-//   name: agentWebAppName
-//   location: location
-//   properties: {
-//     siteConfig: {
-//       appSettings: [
-//         {
-//           name: 'DOCKER_REGISTRY_SERVER_URL'
-//           value: 'https://mcr.microsoft.com'
-//         }
-//         {
-//           name: 'DOCKER_REGISTRY_SERVER_USERNAME'
-//           value: ''
-//         }
-//         {
-//           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-//           value: ''
-//         }
-//         {
-//           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
-//           value: 'false'
-//         }
-//       ]
-//       linuxFxVersion: 'DOCKER|mcr.microsoft.com/appsvc/staticsite:latest'
-//       alwaysOn: true
-//     }
-//     serverFarmId: asp.id
-//     httpsOnly: true
-//     publicNetworkAccess: 'Enabled'
-//     clientAffinityEnabled: false
-//   }
-// }
+resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' existing = {
+  name: acrName
+}
 
 resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
   name: frontEndWebAppName
@@ -60,15 +32,15 @@ resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
       appSettings: [
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://mcr.microsoft.com'
+          value: 'https://${acr.properties.loginServer}'
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_USERNAME'
-          value: ''
+          value: acr.listCredentials().username
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-          value: ''
+          value: acr.listCredentials().passwords[0].value
         }
         {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'

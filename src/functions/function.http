@@ -1,4 +1,9 @@
-@baseUrl = http://localhost:7071
+@baseUrl = https://func-hu3zkdtbqdczk.azurewebsites.net
+
+GET {{baseUrl}}/api/get_identity
+Content-Type: application/json
+
+###
 
 GET {{baseUrl}}/api/session/new
 Content-Type: application/json

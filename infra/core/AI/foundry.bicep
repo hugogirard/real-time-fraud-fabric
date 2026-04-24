@@ -1,5 +1,6 @@
 param accountName string
 param location string
+param logAnalyticResourceId string
 
 #disable-next-line BCP036
 resource account 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
@@ -40,6 +41,48 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-previ
   properties: {
     description: 'Real Time Fraud Detection'
     displayName: 'Fraud'
+  }
+}
+
+resource azureDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'default'
+  scope: account
+  properties: {
+    workspaceId: logAnalyticResourceId
+    logs: [
+      {
+        category: 'Audit'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'RequestResponse'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AzureOpenAIRequestUsage'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'Trace'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
   }
 }
 

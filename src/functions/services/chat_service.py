@@ -1,9 +1,10 @@
 from config import Config
 from contract import SessionInfo, Conversation
 from agent_framework.foundry import FoundryAgent
-from agent_framework import AgentSession
+from agent_framework import AgentSession, Agent
 from azure.identity.aio import DefaultAzureCredential
 import json
+import logging
 
 class ChatService:
     
@@ -14,7 +15,7 @@ class ChatService:
             project_endpoint=config.foundry_project_endpoint,
             agent_name=config.foundry_agent_name,
             agent_version=config.foundry_agent_version,
-            credential=DefaultAzureCredential()
+            credential=DefaultAzureCredential(managed_identity_client_id=config.identity_client_id)
         )
     
     def create_session(self) -> SessionInfo:
@@ -29,12 +30,19 @@ class ChatService:
         session = self.agent.get_session(service_session_id=conversation.session_info.service_session_id,
                                          session_id=conversation.session_info.session_id)
         
-        async for update in self.agent.run(conversation.prompt, session=session, stream=True):
-            if update.text:
-                yield json.dumps({"type": "content", "text": update.text})
+        logging.info(f"Starting agent.run for session {session.session_id}")
+        
+        try:
+            async for update in self.agent.run(conversation.prompt, session=session, stream=True):
+                logging.info(f"Got update: {update}")
+                if update.text:
+                    yield json.dumps({"type": "content", "text": update.text})
 
-        session_info = SessionInfo(
-            sessionId=session.session_id,
-            serviceSessionId=session.service_session_id
-        )
-        yield json.dumps({"type": "session_info", **json.loads(session_info.model_dump_json(by_alias=True))})
+            session_info = SessionInfo(
+                sessionId=session.session_id,
+                serviceSessionId=session.service_session_id
+            )
+            yield json.dumps({"type": "session_info", **json.loads(session_info.model_dump_json(by_alias=True))})
+        except Exception as e:
+            logging.error(f"Streaming error: {e}")
+            yield json.dumps({"type": "error", "text": str(e)})
