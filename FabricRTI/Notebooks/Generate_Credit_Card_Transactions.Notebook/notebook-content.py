@@ -36,14 +36,15 @@
 
 # ## 1. Install and Import Required Libraries
 # 
-# Install the `Faker` and `azure-kusto-data` libraries, then import all required packages.
+# Install the `Faker`, `azure-kusto-data` and `azure-kusto-ingest` libraries, then import all required packages.
 
 # CELL ********************
 
-%pip install --upgrade pip --quiet
+
 %pip install faker --quiet
+%pip install azure-kusto-data --quiet
+%pip install azure-kusto-ingest --quiet
 %pip install azure-eventhub --quiet
-%pip install azure-kusto-data azure-kusto-ingest --quiet
 
 # METADATA ********************
 
@@ -87,10 +88,10 @@ print("Libraries imported successfully.")
 # CELL ********************
 
 # ── Configuration ──────────────────────────────────────────
-START_DATE = datetime(2025, 7, 1)       # Transaction window start
-END_DATE = datetime(2025, 12, 31)        # Transaction window end
+START_DATE = datetime(2026, 1, 1)       # Transaction window start
+END_DATE = datetime(2026, 4, 15)        # Transaction window end
 FRAUD_RATIO = 0.04                      # Target ~4% fraud rate
-AVG_TXN_PER_USER_PER_DAY = 2            # Average daily transactions per user
+AVG_TXN_PER_USER_PER_DAY = 10            # Average daily transactions per user
 RANDOM_SEED = 42
 
 # ── Eventhouse KQL Database Configuration ─────────────────
@@ -558,9 +559,9 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
     return 2 * R * np.arcsin(np.sqrt(a))
 
-# Merge user home location into transactions
+# Merge user home location + identity fields into transactions
 txn_df = txn_df.merge(
-    users_df[["user_id", "home_lat", "home_lon"]],
+    users_df[["user_id", "home_lat", "home_lon", "email", "display_name"]],
     on="user_id",
     how="left",
     suffixes=("", "_home"),
@@ -807,7 +808,8 @@ stream_df["stream_timestamp"] = stream_df["_stream_offset"].apply(
 
 # Columns to send (exclude internal helper cols)
 send_cols = [
-    "transaction_id", "user_id", "stream_timestamp", "amount",
+    "transaction_id", "user_id", "email", "display_name",
+    "stream_timestamp", "amount",
     "merchant_name", "merchant_category", "merchant_city", "merchant_state",
     "merchant_lat", "merchant_lon", "is_fraud", "fraud_type",
     "distance_from_home_km", "hour_of_day", "day_of_week",
