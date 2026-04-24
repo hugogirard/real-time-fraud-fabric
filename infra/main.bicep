@@ -83,6 +83,7 @@ module foundry 'core/AI/foundry.bicep' = {
   params: {
     location: location
     accountName: '${abbrs.foundryAccount}${resourceToken}'
+    logAnalyticResourceId: monitoring.outputs.logAnalyticResourceId
   }
 }
 
@@ -127,10 +128,12 @@ var frontEndResourceName = 'web-${resourceToken}'
 // Workload hosting (backend and frontend)
 module serverFarm 'core/web/webapp.bicep' = {
   scope: rg
+  dependsOn: [acr]
   params: {
     location: location
     appServicePlanResourceName: '${abbrs.webServerFarms}${resourceToken}'
     frontEndWebAppName: frontEndResourceName
+    acrName: '${abbrs.containerRegistryRegistries}${resourceToken}'
   }
 }
 
@@ -244,7 +247,10 @@ module function 'core/function/function.bicep' = {
     appInsightResourceName: monitoring.outputs.insightResourceName
     foundryResourceName: foundry.outputs.resourceName
     appRegistrationClientId: appRegistrationFunction.outputs.applicationId
-    allowedAudiences: appRegistrationFunction.outputs.identifierUris
+    allowedAudiences: union(
+      appRegistrationFunction.outputs.identifierUris,
+      [appRegistrationFunction.outputs.applicationId]
+    )
   }
 }
 

@@ -2,6 +2,7 @@ param appServicePlanResourceName string
 param location string
 //param agentWebAppName string
 param frontEndWebAppName string
+param acrName string
 
 resource asp 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: appServicePlanResourceName
@@ -16,6 +17,10 @@ resource asp 'Microsoft.Web/serverfarms@2024-11-01' = {
   }
 }
 
+resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' existing = {
+  name: acrName
+}
+
 resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
   name: frontEndWebAppName
   location: location
@@ -27,15 +32,15 @@ resource frontEnd 'Microsoft.Web/sites@2025-03-01' = {
       appSettings: [
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://mcr.microsoft.com'
+          value: 'https://${acr.properties.loginServer}'
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_USERNAME'
-          value: ''
+          value: acr.listCredentials().username
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-          value: ''
+          value: acr.listCredentials().passwords[0].value
         }
         {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'

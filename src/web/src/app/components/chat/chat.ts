@@ -1,4 +1,4 @@
-import { Component, input, signal, effect, afterRenderEffect } from "@angular/core";
+import { Component, input, signal, effect, afterRenderEffect, ViewChild, ElementRef } from "@angular/core";
 import { Session } from "../../model/session";
 import { Loading } from "../loading/loading";
 import { MsalService } from "@azure/msal-angular";
@@ -22,6 +22,7 @@ export class Chat {
     username: string | null = null;
     initial: string | null = null;
     userMessage = signal('');
+    @ViewChild('chatInput') chatInput!: ElementRef<HTMLInputElement>;
 
     readonly loadingTitle = 'Loading conversation';
 
@@ -75,6 +76,7 @@ export class Chat {
         if (!this.messageStore.isStreaming()) {
             this.messageStore.sendMessage(this.userMessage());
             this.userMessage.set('');;
+            this.chatInput.nativeElement.focus();
         }
     }
 

@@ -73,13 +73,15 @@ resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
     name: 'appsettings'
     properties: {
       APPLICATIONINSIGHTS_CONNECTION_STRING: insights.properties.ConnectionString
-      AzureWebJobsStorage__blobServiceUri: '$https://${storageAccountName}.blob.core.windows.net'
-      AzureWebJobsStorage__queueServiceUri: '$https://${storageAccountName}.queue.core.windows.net'
-      AzureWebJobsStorage__tableServiceUri: '$https://${storageAccountName}.table.core.windows.net'
+      AzureWebJobsStorage__blobServiceUri: 'https://${storageAccountName}.blob.core.windows.net'
+      AzureWebJobsStorage__queueServiceUri: 'https://${storageAccountName}.queue.core.windows.net'
+      AzureWebJobsStorage__tableServiceUri: 'https://${storageAccountName}.table.core.windows.net'
       AzureWebJobsStorage__clientId: identityClientId
       AzureWebJobsStorage__credential: 'managedidentity'
       PYTHON_ENABLE_INIT_INDEXING: '1'
       PYTHON_ISOLATE_WORKER_DEPENDENCIES: '1'
+      PYTHON_ENABLE_WORKER_EXTENSIONS: '1'
+      AZURE_CLIENT_ID: identityClientId
       FOUNDRY_PROJECT_ENDPOINT: 'https://${foundryResourceName}.services.ai.azure.com/api/projects/fraud-detection'
       FOUNDRY_AGENT_NAME: 'FraudAgent'
       FOUNDRY_AGENT_VERSION: '1'

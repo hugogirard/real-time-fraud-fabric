@@ -4,6 +4,7 @@ export const environment = {
     authority: '__authority__',
     apiScopes: ['__apiScopes__'],
     apiBaseUrl: '__apiBaseUrl__',
-    redirectUrl: '__redirectUrl__'
+    redirectUrl: '__redirectUrl__',
+    appInsightKey: '__appInsightKey__'
 }
 
