@@ -52,18 +52,6 @@ async def run(req: Request) -> StreamingResponse:
             chat_service.run(conversation=conversation),
             media_type="text/event-stream"
         )
-
-        # async def fake_stream():
-        #     words = "The quick brown fox jumps over the lazy dog near the river bank on a sunny afternoon".split()
-        #     for word in words:
-        #         yield json.dumps({"type": "content", "text": word + " "})
-        #         await asyncio.sleep(0.3)
-        #     yield json.dumps({"type": "session_info", "sessionId": "fake", "serviceSessionId": "fake"})
-
-        return StreamingResponse(
-            fake_stream(),
-            media_type="text/event-stream"
-        )
     
     except Exception as err: 
         logging.error(err)

@@ -5,6 +5,6 @@ export const environment = {
     apiScopes: ['api://func-hu3zkdtbqdczk/user_impersonation'],
     apiBaseUrl: 'http://localhost:7071',
     redirectUrl: 'http://localhost:4200',
-    appInsightKey: 'InstrumentationKey=3102538d-1cd8-4b8a-9c7b-a0a7bb27d112;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=85b838d1-6a66-4891-9f6b-aa79140057bb'
+    appInsightKey: ''
 }
 
