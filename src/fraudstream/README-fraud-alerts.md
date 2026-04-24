@@ -5,103 +5,145 @@ sent to the affected cardholder the moment a fraudulent credit-card transaction
 is detected. The solution uses **Microsoft Fabric Data Activator** (also called
 Reflex) as the alerting engine and the **Eventstream** as the data source.
 
-## How it works (architecture)
+> **For dummies summary:** When a fraudulent credit card transaction happens,
+> the system automatically sends an email to the right customer saying
+> "Hey, we detected fraud on your card." This guide shows you exactly how to
+> set that up, click by click.
+
+---
+
+## How it works — the big picture
+
+Here is how the different pieces fit together. Read this first so the steps
+below make sense.
 
 ```
-                                                ┌──────────────────────────┐
-                                                │ Eventhouse (MyFraud_EH)  │
-┌────────────────────────────────────┐          │  ├─ CCTransactions table │
-│ Eventstream                        │──────────│  └─ Customers table      │
-│ CreditCardTransactions_es          │          └──────────────────────────┘
-│                                    │
-│  Transaction events include:       │          ┌──────────────────────────┐
-│  user_id, email, display_name,     │          │ Data Activator (Reflex)  │
-│  amount, merchant_name, is_fraud,  │──────────│  rx-fraud-alerts         │
-│  fraud_type, ...                   │          │                          │
-└────────────────────────────────────┘          │  Object key = user_id    │
-                                                │  Rule: is_fraud == 1     │
-                                                │  Action: Send email      │
-                                                │    To = @email           │
-                                                └──────────┬───────────────┘
-                                                           │
-                                                           ▼
-                                                    Customer inbox
-                                                 (+ CC to Fraud Ops)
+┌─────────────────────────────────┐
+│  Eventhouse (MyFraud_EH)        │
+│  ┌───────────────────────────┐  │
+│  │ Customers table           │  │
+│  │ (user_id, email,          │  │
+│  │  display_name, ...)       │  │
+│  └───────────┬───────────────┘  │
+│              │ loaded at         │
+│              │ notebook start    │
+│  ┌───────────┴───────────────┐  │
+│  │ CCTransactions table      │  │
+│  │ (historical storage)      │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────┐
+│  Notebook                       │
+│  Generate_Credit_Card_           │
+│  Transactions.ipynb             │
+│                                 │
+│  1. Loads Customers from        │
+│     Eventhouse (gets email,     │
+│     display_name, home coords)  │
+│  2. Generates transactions      │
+│  3. Merges customer fields      │
+│     INTO each transaction       │
+│  4. Streams enriched events     │
+│     to the Eventstream          │
+└────────────┬────────────────────┘
+             │ events include:
+             │ user_id, email, display_name,
+             │ amount, merchant_name, is_fraud, ...
+             ▼
+┌─────────────────────────────────┐
+│  Eventstream                    │
+│  CreditCardTransactions_es      │
+│                                 │
+│  Routes events to:              │
+│  ├─ Eventhouse (for storage)    │
+│  └─ Activator (for alerting)    │
+└────────────┬────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────┐
+│  Data Activator (Reflex)        │
+│  rx-fraud-alerts                │
+│                                 │
+│  Object: "Cardholder"           │
+│    grouped by: user_id          │
+│                                 │
+│  Rule: "Fraud Alert Email"      │
+│    When: is_fraud == 1          │
+│    Action: Send email           │
+│      To: @email (from event)    │
+│      Subject: Fraud alert...    │
+│      Body: transaction details  │
+└────────────┬────────────────────┘
+             │
+             ▼
+        Customer inbox
+      (the RIGHT customer)
 ```
 
-**Key design decisions:**
+### Why is the customer email in the stream?
 
-| Decision | Rationale |
-|----------|-----------|
-| Eventstream is the Activator source (not the Eventhouse) | Data Activator monitors live events as they flow through the Eventstream |
-| Customer fields (`email`, `display_name`) are included in the transaction events | Activator can only use fields present in its source stream — it cannot query the Eventhouse at runtime |
-| No join inside the Eventstream itself | The enrichment happens in the `Generate_Credit_Card_Transactions` notebook before events are sent to the Eventstream |
+This is the key design decision you need to understand:
 
-> **Important — Why `email` must be in the stream:**
-> Fabric Data Activator works with the data columns present in its source
-> Eventstream. It does **not** have the ability to query the Eventhouse or
-> run KQL at rule-evaluation time. To send the alert email to the right
-> customer, the `email` field must be part of each transaction event.
->
-> The `Generate_Credit_Card_Transactions` notebook already loads the
-> `Customers` table from the Eventhouse to generate transactions. Adding
-> `email` and `display_name` to the streamed fields is a one-line change
-> (see [Prerequisites](#prerequisites) below).
+**Data Activator can only use data columns that are present in its source
+Eventstream.** It cannot query the Eventhouse, run KQL, or look up data from
+other tables at rule-evaluation time. It only sees the fields on each incoming
+event.
+
+So if you want Activator to send an email to the right customer, the `email`
+field **must be part of every transaction event** flowing through the
+Eventstream.
+
+**How we solve this:** The `Generate_Credit_Card_Transactions` notebook already
+loads the `Customers` table from the Eventhouse (to get home coordinates for
+distance calculations). We simply include `email` and `display_name` in the
+data it merges into each transaction before streaming. This way, every event
+arriving in the Eventstream already has the customer's email attached. No join
+in the Eventstream, no KQL at runtime — just simple data enrichment at the
+source.
 
 ---
 
 ## Prerequisites
 
-### Workspace items
+### 1. Workspace items you need
 
-You need the following items in your **FraudDemo** workspace before starting:
+You need these items in your **FraudDemo** workspace. If something is missing,
+the deployment script or other notebooks create them.
 
-| Item | Type | Purpose |
-|------|------|---------|
-| `CreditCardTransactions_es` | Eventstream | Streams real-time transaction events |
-| `MyFraud_EH` | Eventhouse (KQL database) | Stores `CCTransactions` and `Customers` tables |
+| Item | Type | How to create it |
+|------|------|-----------------|
+| `CreditCardTransactions_es` | Eventstream | Created manually or via workspace setup |
+| `MyFraud_EH` | Eventhouse (KQL database) | Created manually or via workspace setup |
+| `Customers` table | Table in the Eventhouse | Run `Generate_Customers.ipynb` or import `customers.csv` |
 | `rx-fraud-alerts` | Reflex (Data Activator) | Created by `Deploy-FraudAlerts.ps1` |
 
-### Customers table
+### 2. Customers table must be loaded
 
-The `Customers` table must be loaded in the Eventhouse from `customers.csv`.
-It contains 10 users (`U0001`–`U0010`) with these columns:
+The `Customers` table must exist in the Eventhouse **before** you run the
+transaction generator notebook. It contains your 10 test users:
 
-| Column | Example |
-|--------|---------|
-| `user_id` | `U0001` |
-| `first_name` | `Mark` |
-| `last_name` | `Johnson` |
-| `display_name` | `Mark Johnson` |
-| `email` | `mark.johnson@contoso.com` |
-| `home_city` | `Porto Alegre` |
-| `home_state` | `RS` |
-| `credit_limit` | `15000.00` |
+| user_id | display_name | email | home_city |
+|---------|-------------|-------|-----------|
+| U0001 | Mark Johnson | mark.johnson@...onmicrosoft.com | Porto Alegre |
+| U0002 | Daniel Doyle | daniel.doyle@...onmicrosoft.com | Indianapolis |
+| U0003 | Stephanie Miller | stephanie.miller@...onmicrosoft.com | Belo Horizonte |
+| ... | ... | ... | ... |
 
-### Transaction stream must include customer fields
+### 3. Notebook includes email in the stream (already done)
 
-The `Generate_Credit_Card_Transactions` notebook must include `email` and
-`display_name` in the events it sends to the Eventstream. Open the notebook
-and add these two fields to the `send_cols` list:
+The `Generate_Credit_Card_Transactions` notebook has been updated to include
+`email` and `display_name` in every transaction event it sends to the
+Eventstream. Specifically:
 
-```python
-send_cols = [
-    "transaction_id", "user_id",
-    "email", "display_name",          # <-- ADD THESE TWO FIELDS
-    "stream_timestamp", "amount",
-    "merchant_name", "merchant_category",
-    "merchant_city", "merchant_state",
-    "merchant_lat", "merchant_lon",
-    "is_fraud", "fraud_type",
-    "distance_from_home_km", "hour_of_day", "day_of_week",
-    "time_since_last_txn_sec", "rolling_avg_amount",
-    "amount_zscore", "txn_count_last_1h", "txn_count_last_24h",
-]
-```
+- The merge step now pulls `email` and `display_name` from the Customers
+  table (in addition to `home_lat` and `home_lon`).
+- The `send_cols` list now includes `email` and `display_name`.
 
-The notebook already loads the `Customers` table from the Eventhouse and merges
-it with transactions (for `home_lat`, `home_lon`, etc.). Adding `email` and
-`display_name` to `send_cols` is all that's needed — no new join is required.
+You do **not** need to change the notebook — this is already done. But if you
+ever reset the notebook, make sure these two fields are still present in
+`send_cols`.
 
 ---
 
@@ -131,221 +173,246 @@ Or with the optional Azure Logic App for advanced HTML emails:
     -AlertRecipientEmail "security@contoso.com"
 ```
 
-The script will:
-1. Authenticate via Azure CLI
-2. Find the workspace, KQL database, and Eventstream
-3. Create the Reflex item (if it doesn't exist)
-4. (Optional) Deploy the Azure Logic App
-5. Output portal links and the remaining manual configuration steps below
+After the script finishes, follow Steps 1–4 below to configure the Activator.
 
 ---
 
-## Step 1 — Add the Activator as a destination in the Eventstream
+## Step 1 — Connect the Eventstream to the Activator
 
-This step connects your live transaction stream to the Data Activator so it can
-monitor every event in real time.
+**Goal:** Tell the Eventstream to send a copy of every transaction event to
+your Data Activator so it can monitor them in real time.
+
+**Where you do this:** In the **Eventstream** item (not the Activator).
 
 > **Official docs with screenshots:**
 > [Add a Fabric Activator destination to an eventstream](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/event-streams/add-destination-activator)
 
-### Where to do this
+### Click-by-click instructions
 
-You do this from the **Eventstream** item, not from the Activator.
+1. Go to [https://app.fabric.microsoft.com](https://app.fabric.microsoft.com)
+   and open your **FraudDemo** workspace.
 
-### Step-by-step
+2. In the list of workspace items, find and click on
+   **`CreditCardTransactions_es`** (look for the Eventstream icon — it looks
+   like a lightning bolt or stream). This opens the **Eventstream canvas** — a
+   visual diagram showing where your data comes from and where it goes.
 
-1. Open the [Fabric portal](https://app.fabric.microsoft.com/) and navigate to
-   your **FraudDemo** workspace.
+3. Look at the top-left corner of the canvas. If it says **"Live view"**, you
+   need to switch to edit mode first:
+   - Click the **Edit** button in the toolbar at the top.
+   - The view switches to **"Edit mode"**. You can now make changes.
 
-2. In the workspace item list, click on **`CreditCardTransactions_es`**
-   (the Eventstream). This opens the Eventstream canvas.
+4. In the toolbar at the top, click **Add destination**. A dropdown menu
+   appears. Select **Activator**.
 
-3. You should see a visual canvas with your event source on the left. If the
-   canvas says **Live view** in the top-left corner, click **Edit** in the
-   toolbar to switch to **Edit mode**. You must be in Edit mode to add
-   destinations.
+   > **Can't find "Add destination"?** Make sure you're in **Edit mode** (see
+   > step 3). The button only appears in edit mode. You can also right-click on
+   > the canvas and look for "Add destination" in the context menu.
 
-4. In the ribbon (toolbar at the top), click **Add destination** and select
-   **Activator** from the dropdown list.
+5. A configuration pane opens on the right side. Fill in these fields:
 
-5. In the **Activator** pane that opens on the right:
-   - **Destination name**: enter a name like `FraudAlertActivator`
-   - **Workspace**: select **FraudDemo**
-   - **Activator**: select the existing **`rx-fraud-alerts`** Reflex
-     (created by the deployment script). If you don't see it, click
-     **Create new** and name it `rx-fraud-alerts`.
+   | Field | What to enter |
+   |-------|--------------|
+   | **Destination name** | `FraudAlertActivator` (or any name you like) |
+   | **Workspace** | Select **FraudDemo** from the dropdown |
+   | **Activator** | Select **`rx-fraud-alerts`** from the dropdown. If you don't see it, click **Create new** and name it `rx-fraud-alerts` |
 
 6. Click **Save**.
 
-7. Back on the canvas, click **Publish** in the toolbar to apply the changes.
-   Wait for the publish to complete (you'll see a green confirmation).
+7. **Important — Publish your changes:** Back on the canvas, click the
+   **Publish** button in the toolbar. This applies your changes and starts
+   routing events to the Activator. Wait for the green "Published
+   successfully" confirmation message.
 
-8. The Eventstream canvas now shows an **Activator** destination node connected
-   to your event source. Transaction events are now flowing into the Activator.
+   > If you skip this step, events will NOT flow to the Activator.
 
-> **Why the Eventstream and not the Eventhouse?**
-> Data Activator is designed to monitor **live event streams**. It needs the
-> Eventstream as its source so it can evaluate rules on each arriving event in
-> real time. The Eventhouse stores historical data and is not a real-time source
-> for Activator.
+8. You should now see a new node on the canvas labeled with your Activator
+   destination, connected to your event source by a line. This means events
+   are flowing.
+
+**What you just did:** You told the Eventstream: "Every time a transaction
+event comes in, also send a copy to the Data Activator called
+`rx-fraud-alerts`." The Activator is now receiving live data.
 
 ---
 
-## Step 2 — Create an object in the Activator
+## Step 2 — Create a "Cardholder" object in the Activator
 
-An **object** in Data Activator represents the business entity you are
-monitoring. In this case, each object is a **cardholder** identified by
-`user_id`. The Activator groups all incoming events by this key so that
-rules are evaluated per cardholder.
+**Goal:** Tell the Activator how to organize incoming events. We want it to
+group events by `user_id` so it tracks each cardholder separately. This way,
+when a fraud rule fires, it knows which specific cardholder is affected.
+
+**Where you do this:** In the **Activator** item (Reflex).
 
 > **Official docs with screenshots:**
 > - [Assign data to objects in Activator](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-assign-data-objects)
-> - [Tutorial: Create and activate a rule](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-tutorial) — see the "Create an object" section
+> - [Tutorial — "Create an object" section](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-tutorial#create-an-object)
 
-### Where to do this
+### Click-by-click instructions
 
-You do this from inside the **Activator** item (Reflex).
+1. Go back to the **FraudDemo** workspace in the Fabric portal.
 
-### Step-by-step
+2. Find and click on **`rx-fraud-alerts`** in the workspace item list (look for
+   the Activator/Reflex icon). The Activator opens.
 
-1. In the **FraudDemo** workspace, click on **`rx-fraud-alerts`** to open the
-   Activator.
+3. Look at the **Explorer pane** on the left side. You should see a stream
+   listed there — this is the data coming from your Eventstream (it may be
+   called `FraudAlertActivator` or similar, matching the destination name you
+   set in Step 1).
 
-2. In the **Explorer** pane (left side), you should see the eventstream you
-   connected in Step 1 (it may appear as `FraudAlertActivator` or
-   `CreditCardTransactions_es`). Click on it to select it. The center pane
-   shows a live table of incoming events.
+   > **Don't see any stream?** Go back to Step 1 and make sure you published
+   > the Eventstream changes. Also make sure the notebook is running and
+   > sending events.
 
-3. In the ribbon (toolbar at the top), click **New object**.
+4. **Click on the stream** in the Explorer pane to select it. The center pane
+   shows a live table of incoming events. You should see columns like
+   `user_id`, `email`, `display_name`, `amount`, `is_fraud`, etc.
 
-4. In the **Build object** pane that opens on the right, fill in:
+   > **Don't see `email` or `display_name` columns?** The notebook is not
+   > including these fields. Make sure you're using the updated notebook that
+   > has `email` and `display_name` in the `send_cols` list.
 
-   | Field | Value | Why |
-   |-------|-------|-----|
-   | **Object name** | `Cardholder` | This is the business entity we're monitoring — each cardholder |
-   | **Unique ID column** | `user_id` | This column uniquely identifies each cardholder (e.g. `U0001`, `U0002`, …). All events with the same `user_id` are grouped into one object instance |
+5. With the stream selected, click **New object** in the ribbon (toolbar at the
+   top of the screen).
 
-5. **(Optional but recommended)** Under **Assign Properties**, select the
-   columns you want available as properties on the object. Select at least:
-   - `email`
-   - `display_name`
-   - `amount`
-   - `merchant_name`
-   - `merchant_city`
-   - `merchant_state`
-   - `is_fraud`
-   - `fraud_type`
-   - `transaction_id`
-   - `stream_timestamp`
+6. The **Build object** pane opens on the right side. Fill in:
 
-   These will become properties you can reference in your rule conditions
-   and email notifications.
+   | Field | What to enter | Why |
+   |-------|--------------|-----|
+   | **Object name** | `Cardholder` | This is what we're monitoring — cardholders |
+   | **Unique ID column** | Select `user_id` from the dropdown | This tells Activator: "Each unique `user_id` value (U0001, U0002, ...) is a separate cardholder. Group their events together." |
 
-6. Click **Create**.
+7. **(Important)** Under **Assign Properties**, you'll see a list of all
+   columns from the stream. Check the boxes next to these columns to make them
+   available as properties you can use in rules and email notifications:
 
-7. The Explorer pane now shows a **Cardholder** object with the properties you
-   selected. Click on the **Cardholder** object to see its events organized by
-   `user_id`. You should see different `user_id` values (like `U0001`,
-   `U0002`, etc.) each with their own event history.
+   - [x] `email` — **you need this to send emails to the right person**
+   - [x] `display_name` — to address the customer by name in the email
+   - [x] `amount` — to show the transaction amount
+   - [x] `merchant_name` — to show where the purchase was made
+   - [x] `merchant_city` — transaction location
+   - [x] `merchant_state` — transaction location
+   - [x] `is_fraud` — the fraud flag (needed for the rule condition)
+   - [x] `fraud_type` — type of fraud detected
+   - [x] `transaction_id` — unique transaction identifier
+   - [x] `stream_timestamp` — when the transaction happened
 
-> **What just happened?**
-> You told Activator: "Group all incoming transaction events by `user_id`.
-> Each unique `user_id` is a *Cardholder* object. Track the selected columns
-> as properties on each cardholder." Now you can create rules that fire per
-> cardholder when specific conditions are met.
+   > **Tip:** You can always add more properties later. But `email` is
+   > critical — without it, you can't send emails to the customer.
+
+8. Click **Create**.
+
+9. In the Explorer pane on the left, you should now see:
+   ```
+   ▼ Cardholder
+     ├─ [stream name]
+     ├─ email
+     ├─ display_name
+     ├─ amount
+     ├─ merchant_name
+     └─ ... (other properties)
+   ```
+
+   Click on the **Cardholder** object itself. The center pane shows events
+   organized by `user_id`. You should see values like `U0001`, `U0002`, etc.,
+   each with their own events.
+
+**What you just did:** You told Activator: "I'm monitoring cardholders. Each
+cardholder is identified by `user_id`. Here are the data fields I care about
+for each cardholder." Now the `email` field from the Customers table (which
+was merged into the stream by the notebook) is available as a property on each
+cardholder object.
 
 ---
 
 ## Step 3 — Create the fraud detection rule
 
-A **rule** defines what condition to watch for and what action to take when the
-condition is met. Our rule is simple: when a transaction arrives with
-`is_fraud == 1`, send an email to the cardholder.
+**Goal:** Create a rule that says: "When a transaction arrives with
+`is_fraud == 1`, send an email to the affected customer using the `email`
+property from that event."
+
+**Where you do this:** In the **Activator** item, on the **Cardholder** object
+you just created.
 
 > **Official docs with screenshots:**
-> - [Create a rule in Fabric Activator](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-create-activators) — see "Define a rule condition and action"
-> - [Tutorial: Create and activate a rule](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-tutorial) — see "Explore a rule" and "Create a new rule" sections
+> - [Create a rule in Fabric Activator](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-create-activators)
+> - [Tutorial — "Explore a rule" and "Create a new rule" sections](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/data-activator/activator-tutorial#explore-a-rule)
 
-### Where to do this
+### Click-by-click instructions
 
-You do this from inside the **Activator** item, on the **Cardholder** object
-you created in Step 2.
+#### 3a. Start creating the rule
 
-### Step-by-step
+1. In the **Explorer pane** (left side), expand the **Cardholder** object by
+   clicking the arrow next to it.
 
-1. In the **Explorer** pane (left side), expand the **Cardholder** object and
-   click on the stream underneath it (this is the eventstream data assigned to
-   the object). You'll see a chart of event values in the center pane.
+2. Click on the **stream** underneath the Cardholder object (this is the
+   eventstream data). The center pane shows a chart of event values.
 
-2. In the ribbon (toolbar at the top), click **New rule**.
+3. In the ribbon (toolbar at the top), click **New rule**. The **Definition
+   pane** opens on the right side with three sections you need to fill in:
+   **Monitor**, **Condition**, and **Action**.
 
-3. The **Definition** pane opens on the right side with three sections:
-   **Monitor**, **Condition**, and **Action**. Fill in each section as
-   described below.
+#### 3b. Fill in the Monitor section
 
----
-
-### 3a. Monitor section
-
-The Monitor section defines *what data* the rule watches.
+The Monitor section tells the rule *what data to watch*.
 
 1. The **Monitor** dropdown should already show the stream from your
-   Eventstream. If not, select it.
+   Eventstream. If it doesn't, select it from the dropdown.
 
-2. You do **not** need to add any summarization (no Average, no Count).
-   We want to react to every single event, not an aggregate.
+2. **Do not add any summarization** (no Average, no Count, nothing). We want
+   the rule to look at every single event as it arrives — not an aggregate
+   over time.
 
----
+#### 3c. Fill in the Condition section
 
-### 3b. Condition section
+The Condition section tells the rule *when to fire*.
 
-The Condition section defines *when* the rule fires.
+1. Select the condition type: **On each event when a value is met**.
 
-1. For the condition type, select **On each event when a value is met**.
+2. Configure the condition:
+   - **Column**: select `is_fraud` from the dropdown
+   - **Operator**: select `Equals`
+   - **Value**: type `1`
 
-2. Set the condition to:
-   - **Column**: `is_fraud`
-   - **Operator**: `Equals`
-   - **Value**: `1`
+   > **If the rule never fires later:** The `is_fraud` column might be a
+   > string in your data (values `"0"` and `"1"` as text, not numbers). Try
+   > changing the value to `"1"` (with quotes) if the integer `1` doesn't
+   > work.
 
-   > **Note:** In some workspaces `is_fraud` is a string column (`"0"` or
-   > `"1"`). If the `Equals 1` condition never fires, try `"1"` (with quotes)
-   > instead.
+3. Look at the chart in the center pane — it should update to highlight only
+   the events where `is_fraud == 1`. If you see highlighted data points, the
+   condition is working.
 
-3. The chart in the center pane updates to show **only** the events where
-   `is_fraud == 1`. Verify that you see highlighted data points — these are the
-   events that would trigger the rule.
+#### 3d. Fill in the Action section — this is where the email is configured
 
----
+The Action section tells the rule *what to do when the condition is met*.
+This is where you configure the email to go to the right customer.
 
-### 3c. Action section — send an email to the right customer
+1. For **Select action**, choose **Send email** from the dropdown.
 
-The Action section defines *what happens* when the condition is met.
+2. **For "To" (the recipient) — THIS IS THE KEY STEP:**
+   - Click on the **To** field.
+   - You'll see a dropdown. **Do not type an email address manually.**
+   - Instead, look for **`email`** in the dropdown list and select it.
+   - This tells Activator: "Send the email to whatever address is in the
+     `email` column of the event that triggered the rule."
 
-1. For **Select action**, choose **Send email**.
-
-2. For **To** (the recipient):
-   - Click the **To** field.
-   - From the dropdown, select the **`email`** property.
-   - This means the email will be sent to whichever customer's `email` address
-     is on the event that triggered the rule. For example, if `U0003` made a
-     fraudulent transaction, the email goes to
-     `stephanie.miller@contoso.com`.
-
-   > **This is how the right user gets the alert.** The `email` column in
-   > each transaction event comes from the `Customers` table in the
-   > Eventhouse (it was included in the stream by the notebook). The
-   > Activator reads this field from the incoming event and uses it as the
-   > email recipient.
+   > **Example of what happens at runtime:** A transaction comes in for
+   > user `U0003` (Stephanie Miller) with `is_fraud == 1`. The event also
+   > contains `email = stephanie.miller@...onmicrosoft.com` (because the
+   > notebook included it). Activator sees the rule fire and sends the
+   > alert email to `stephanie.miller@...onmicrosoft.com`. The RIGHT
+   > customer gets the RIGHT email.
 
 3. For **Subject**, enter:
    ```
    Fraud Alert — Suspicious transaction of $@amount at @merchant_name
    ```
-   > **Tip:** Type `@` to insert property references. When you type `@`,
-   > a dropdown appears with all available properties. Select `amount`,
-   > `merchant_name`, etc. The `@property_name` tokens are replaced with
-   > actual values when the email is sent.
+   > **How to insert @property references:** When you type `@` in the text
+   > field, a dropdown appears showing all available properties (`amount`,
+   > `merchant_name`, `display_name`, etc.). Click on the one you want to
+   > insert. At runtime, `@amount` is replaced with the actual value (e.g.
+   > `$523.47`) and `@merchant_name` is replaced with the merchant name.
 
 4. For **Headline**, enter:
    ```
@@ -368,43 +435,50 @@ The Action section defines *what happens* when the condition is met.
    If you did not authorize this transaction, please contact your bank immediately.
    ```
 
+   > Type `@` each time you want to insert a property value. For example,
+   > type `@` then select `display_name` from the dropdown. It shows as
+   > `@display_name` in the text box but will be replaced with the actual
+   > customer name (like "Stephanie Miller") when the email is sent.
+
 6. For **Context**, select additional properties to include as a summary table
-   in the email. Check at least:
-   - `transaction_id`
-   - `amount`
-   - `merchant_name`
-   - `fraud_type`
-   - `stream_timestamp`
+   at the bottom of the email. Check these boxes:
+   - [x] `transaction_id`
+   - [x] `amount`
+   - [x] `merchant_name`
+   - [x] `fraud_type`
+   - [x] `stream_timestamp`
 
 7. Click **Create** to save the rule.
 
----
+#### 3e. Rename the rule
 
-### 3d. Rename the rule
+1. The new rule appears in the **Explorer pane** under the Cardholder object.
+   Click on it to select it.
 
-1. After creating the rule, it appears in the **Explorer** pane under the
-   **Cardholder** object. Select it.
+2. In the center pane, click the **pencil icon** (edit icon) next to the rule
+   name at the top.
 
-2. In the center pane, click the **pencil icon** next to the rule name at the
-   top, and rename it to **`Fraud Alert Email`**.
+3. Rename it to **`Fraud Alert Email`** and press Enter.
 
----
+#### 3f. Test the rule before going live
 
-### 3e. Test the rule before starting
+1. With the **Fraud Alert Email** rule selected, click **Send me a test
+   action** (in the Definition pane on the right, or in the ribbon toolbar).
 
-1. With the rule selected, click **Send me a test action** in the Definition
-   pane (or in the ribbon). This sends a sample alert to **your** email using
-   a past event where the condition was true.
+   > **What this does:** It finds a past event where `is_fraud == 1` and
+   > sends you a sample email so you can see what it looks like.
+   >
+   > **Important:** The test email always goes to **your own email** (the
+   > person signed into Fabric), NOT to the customer. This is by design — it
+   > lets you verify the format before going live.
 
-   > **Note:** The test alert always goes to YOU (the signed-in user),
-   > regardless of the `email` property value. This is by design so you can
-   > verify the email format before going live.
+2. Check your inbox (also check spam/junk). You should receive an email with
+   the fraud transaction details filled in.
 
-2. Check your inbox. You should receive an email with the fraud transaction
-   details filled in. Verify the subject, body, and context values look correct.
-
-3. If you don't receive it, check your spam/junk folder, or see the
-   [Troubleshooting](#troubleshooting) section below.
+3. **If the "Send me a test action" button is grayed out:** This means there
+   are no past events where `is_fraud == 1`. Make sure the notebook is running
+   and streaming events. Wait a few minutes for some fraud events to come in,
+   then try again.
 
 ---
 
@@ -414,15 +488,16 @@ The Action section defines *what happens* when the condition is met.
    the Definition pane, or click **Start** in the ribbon toolbar.
 
 2. The rule status changes to **Running** (you'll see a green "Running"
-   indicator next to the rule name in the Explorer pane).
+   indicator next to the rule name).
 
 3. Open and run the **`Generate_Credit_Card_Transactions`** notebook to start
-   streaming transactions. The notebook replays 6 months of transaction data
+   streaming transactions. The notebook replays 6 months of transactions
    compressed into ~30 minutes of real-time streaming.
 
 4. As events flow in, every transaction where `is_fraud == 1` triggers the
-   rule. The affected cardholder receives an email at the address stored in the
-   `email` field of that event.
+   rule. The affected cardholder receives an email at their address (the
+   `email` field from the Customers table, included in the stream by the
+   notebook).
 
 5. To **verify** it's working:
    - In the Activator, click on the **Fraud Alert Email** rule.
@@ -431,15 +506,15 @@ The Action section defines *what happens* when the condition is met.
    - Check the inbox of one of the test users (e.g. `mark.johnson@...`) for
      the fraud alert email.
 
-6. To **stop** the rule, click **Stop** in the ribbon toolbar.
+6. To **stop** the rule later, click **Stop** in the ribbon toolbar.
 
 ---
 
 ## (Optional) Use the Logic App for advanced HTML emails
 
-The built-in Activator email is plain-text with a structured context table.
-If you want a **rich HTML email** with branded styling, a fraud history table,
-and a deep-link button, deploy the Logic App:
+The built-in Activator email is a simple structured message. If you want a
+**rich HTML email** with branded styling, a fraud history table, and a
+deep-link button, deploy the Logic App:
 
 1. Run the deployment script with `-DeployLogicApp` (see Quick Start above).
 
@@ -461,14 +536,40 @@ and a deep-link button, deploy the Logic App:
 
 ---
 
+## How the email reaches the right customer — end-to-end flow
+
+Here is exactly what happens when a fraudulent transaction occurs:
+
+1. The **notebook** generates a transaction for user `U0003` (Stephanie Miller)
+   with `is_fraud = 1`.
+
+2. Before sending the event, the notebook looks up `U0003` in the `Customers`
+   table and attaches `email = stephanie.miller@...onmicrosoft.com` and
+   `display_name = Stephanie Miller` to the event.
+
+3. The enriched event is sent to the **Eventstream**.
+
+4. The Eventstream routes the event to both the **Eventhouse** (for storage)
+   and the **Activator** (for alerting).
+
+5. The **Activator** receives the event, sees `is_fraud == 1`, and the
+   **Fraud Alert Email** rule fires.
+
+6. The rule's action says "Send email to `@email`". Activator reads the
+   `email` field from the event → `stephanie.miller@...onmicrosoft.com`.
+
+7. Stephanie Miller receives the fraud alert email in her inbox.
+
+---
+
 ## Summary of what each component does
 
 | Component | Role |
 |-----------|------|
-| **Eventstream** (`CreditCardTransactions_es`) | Streams raw transaction events including customer fields (`email`, `display_name`) from the notebook |
-| **Eventhouse** (`MyFraud_EH`) | Stores `CCTransactions` history and `Customers` reference table. The notebook reads `Customers` to enrich transactions before streaming |
-| **Notebook** (`Generate_Credit_Card_Transactions`) | Generates transactions, enriches them with customer data from the Eventhouse, and sends them to the Eventstream |
-| **Activator** (`rx-fraud-alerts`) | Monitors the Eventstream, groups events by `user_id`, and sends email alerts when `is_fraud == 1` |
+| **Eventhouse** (`MyFraud_EH`) | Stores `Customers` reference table and `CCTransactions` history |
+| **Notebook** (`Generate_Credit_Card_Transactions`) | Generates transactions, enriches each one with `email` and `display_name` from the Customers table, and streams them to the Eventstream |
+| **Eventstream** (`CreditCardTransactions_es`) | Routes enriched transaction events to the Eventhouse (storage) and Activator (alerting) |
+| **Activator** (`rx-fraud-alerts`) | Monitors events, groups by `user_id`, fires rule when `is_fraud == 1`, sends email to the `email` address in the event |
 
 ---
 
@@ -476,11 +577,13 @@ and a deep-link button, deploy the Logic App:
 
 | Problem | Solution |
 |---------|----------|
-| **Rule never fires** | Verify the Eventstream has `is_fraud == 1` events. Run this KQL query in the Eventhouse: `CCTransactions \| where is_fraud == "1" \| count`. Also check that the condition value matches the data type (string `"1"` vs integer `1`). |
-| **Email goes to the wrong person** | Check that `email` is included in the transaction events. In the Eventstream Live view, inspect a sample event and confirm it contains an `email` field. If missing, update the notebook's `send_cols` list (see [Prerequisites](#transaction-stream-must-include-customer-fields)). |
-| **No email received** | Check your spam/junk folder. Also verify that the Fabric admin has enabled email actions for Activator in the tenant admin portal: **Admin portal → Tenant settings → Data Activator**. |
-| **"Send me a test action" button is grayed out** | The button is only enabled if there is at least one past event where the rule condition is true. Make sure the Eventstream has been running and has produced `is_fraud == 1` events. |
-| **Activator shows "No data"** | Confirm the Eventstream destination was published (Step 1, sub-step 7). Go back to the Eventstream, switch to **Live view**, and check that events are flowing to the Activator destination node. |
+| **No `email` column in the stream** | The notebook is not including customer fields. Make sure the notebook's merge step includes `email` and `display_name`, and that `send_cols` lists both fields. Re-run the notebook after fixing. |
+| **Rule never fires** | Verify the Eventstream has `is_fraud == 1` events. Run this KQL query in the Eventhouse: `CCTransactions \| where is_fraud == "1" \| count`. Also check the condition value matches the data type (string `"1"` vs integer `1`). |
+| **Email goes to the wrong person** | Inspect a sample event in the Eventstream Live view. Confirm the `email` field matches the expected customer for that `user_id`. If `email` is empty or wrong, check the `Customers` table in the Eventhouse. |
+| **No email received** | Check spam/junk. Verify that the Fabric admin has enabled email actions: **Admin portal → Tenant settings → Data Activator**. |
+| **"Send me a test action" button is grayed out** | No past event has `is_fraud == 1` yet. Run the notebook, wait a few minutes for fraud events to flow, then try again. |
+| **Activator shows "No data"** | Confirm the Eventstream destination was published (Step 1, sub-step 7). Go to the Eventstream, switch to **Live view**, and check events are flowing to the Activator node. |
+| **"email" not available in the To dropdown** | You didn't assign `email` as a property in Step 2. Go back to the Cardholder object, select the stream, and use **New Property** from the ribbon to add the `email` column. |
 
 ---
 
