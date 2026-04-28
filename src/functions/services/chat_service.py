@@ -1,7 +1,7 @@
 from config import Config
 from contract import SessionInfo, Conversation
 from agent_framework.foundry import FoundryAgent
-from agent_framework import AgentSession, Agent
+from agent_framework import AgentSession, Agent, AgentRunInputs
 from azure.identity.aio import DefaultAzureCredential
 import json
 import logging
@@ -25,15 +25,18 @@ class ChatService:
             serviceSessionId=session.service_session_id
         )
     
-    async def run(self, conversation: Conversation):
+    async def run(self,principal_name: str, conversation: Conversation):
 
-        session = self.agent.get_session(service_session_id=conversation.session_info.service_session_id,
+        session = self.agent.get_session(service_session_id=conversation.session_info.service_session_id,                                         
                                          session_id=conversation.session_info.session_id)
         
         logging.info(f"Starting agent.run for session {session.session_id}")
         
-        try:
-            async for update in self.agent.run(conversation.prompt, session=session, stream=True):
+        try:         
+
+            payload = json.dumps({ 'username': principal_name, 'prompt': conversation.prompt })
+
+            async for update in self.agent.run(payload, session=session, stream=True):
                 logging.info(f"Got update: {update}")
                 if update.text:
                     yield json.dumps({"type": "content", "text": update.text})
