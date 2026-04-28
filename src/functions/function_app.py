@@ -45,11 +45,19 @@ async def run(req: Request) -> StreamingResponse:
     
     try:
         
+        principal_name = req.headers.get('X-MS-CLIENT-PRINCIPAL-NAME')
+
+        if not principal_name:
+            return func.HttpResponse(
+                "Principal name not provided",
+                status_code=404
+            )
+        
         req_body = await req.body()
         conversation = Conversation.model_validate_json(req_body)
-
+        
         return StreamingResponse(
-            chat_service.run(conversation=conversation),
+            chat_service.run(principal_name=principal_name,conversation=conversation),
             media_type="text/event-stream"
         )
     
