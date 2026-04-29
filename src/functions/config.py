@@ -17,3 +17,15 @@ class Config:
     @property
     def identity_client_id(self) -> str:
         return os.getenv('AZURE_CLIENT_ID')
+    
+    @property
+    def tenant_id(self) -> str:
+        return os.getenv('TENANT_ID')
+    
+    @property
+    def client_id(self) -> str:
+        return os.getenv('CLIENT_ID')
+    
+    @property
+    def client_secret(self) -> str:
+        return os.getenv('CLIENT_SECRET')

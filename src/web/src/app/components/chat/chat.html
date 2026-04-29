@@ -35,7 +35,7 @@
             <div class="message" [class.bot]="msg.role === 'assistant'" [class.user]="msg.role === 'user'">
                 <div class="message-avatar">{{ msg.role === 'assistant' ? 'CB' : initial }}</div>
                 <div class="message-content">
-                    <div class="message-bubble">
+                    <div class="message-bubble" [class.message-error]="msg.isError">
                         @if (msg.role === 'assistant') {
                         <remark [markdown]="msg.content"></remark>
                         } @else {
@@ -50,7 +50,7 @@
             <div class="message bot">
                 <div class="message-avatar">CB</div>
                 <div class="message-content">
-                    <div class="message-bubble">
+                    <div class="message-bubble" [class.message-error]="messageStore.isStreamingError()">
                         <remark [markdown]="messageStore.streamingContent()"></remark>
                     </div>
                 </div>
