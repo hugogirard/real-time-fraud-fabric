@@ -1,10 +1,10 @@
 export const environment = {
     production: true,
-    clientId: '3b8c6de0-058a-44f8-9ece-ce5609568cbc',
-    authority: 'https://login.microsoftonline.com/5e457c85-d7f3-4cd9-9ac6-e544a610a955',
-    apiScopes: ['api://func-hu3zkdtbqdczk/user_impersonation'],
-    apiBaseUrl: 'https://func-hu3zkdtbqdczk.azurewebsites.net',
-    redirectUrl: 'https://web-hu3zkdtbqdczk.azurewebsites.net',
-    appInsightKey: 'InstrumentationKey=3102538d-1cd8-4b8a-9c7b-a0a7bb27d112;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=85b838d1-6a66-4891-9f6b-aa79140057bb'
+    clientId: '9fff1836-37d0-4f9f-9267-74b5f73be892',
+    authority: 'https://login.microsoftonline.com/ac1c9a59-3e53-4771-a9c3-bfe388f15572',
+    apiScopes: ['api://func-uqq7t4ipfdruq/user_impersonation'],
+    apiBaseUrl: 'https://func-uqq7t4ipfdruq.azurewebsites.net',
+    redirectUrl: 'https://web-uqq7t4ipfdruq.azurewebsites.net',
+    appInsightKey: 'InstrumentationKey=76954b7a-7400-4699-81a0-cb9fa8151893;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=0ce58994-c2d4-49a4-b1e6-f6c31a5c1bc4'
 }
 

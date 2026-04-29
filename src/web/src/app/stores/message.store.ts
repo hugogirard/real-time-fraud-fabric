@@ -15,9 +15,10 @@ export class MessageStore {
     constructor(private fraudService: FraudService, private sessionService: SessionService) { }
 
     private state = signalState({
-        messages: [] as { role: string; content: string }[],
+        messages: [] as { role: string; content: string; isError?: boolean }[],
         streamingContent: '',
         isStreaming: false,
+        isStreamingError: false,
         lastSessionInfo: null as any
     });
 
@@ -26,6 +27,7 @@ export class MessageStore {
     readonly messages = this.state.messages;
     readonly streamingContent = this.state.streamingContent;
     readonly isStreaming = this.state.isStreaming;
+    readonly isStreamingError = this.state.isStreamingError;
 
     addWelcomeMessage() {
         patchState(this.state, (state) => ({
@@ -98,6 +100,9 @@ export class MessageStore {
 
                     if (obj.type === 'content') {
                         fulltext += obj.text;
+                    } else if (obj.type === 'error') {
+                        fulltext += obj.text;
+                        patchState(this.state, { isStreamingError: true });
                     } else if (obj.type === 'session_info') {
                         patchState(this.state, { lastSessionInfo: obj });
                     }
@@ -116,9 +121,10 @@ export class MessageStore {
 
     private finalize() {
         patchState(this.state, (state) => ({
-            messages: [...state.messages, { role: 'assistant', content: state.streamingContent }],
+            messages: [...state.messages, { role: 'assistant', content: state.streamingContent, isError: state.isStreamingError }],
             streamingContent: '',
-            isStreaming: false
+            isStreaming: false,
+            isStreamingError: false
         }));
     }
 
