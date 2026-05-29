@@ -40,7 +40,7 @@
 
 # CELL ********************
 
-
+%pip install --upgrade pip
 %pip install faker --quiet
 %pip install azure-kusto-data --quiet
 %pip install azure-kusto-ingest --quiet

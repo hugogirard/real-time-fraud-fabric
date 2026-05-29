@@ -1,5 +1,17 @@
 [
   {
+    "name": "dimCustomer",
+    "path": "/Tables/dbo",
+    "target": {
+      "type": "OneLake",
+      "oneLake": {
+        "path": "Tables/dimCustomer",
+        "itemId": "e6490429-85d1-459e-b337-4ed8d599775a",
+        "workspaceId": "67539f31-c6b8-4efe-b053-55c91e3f2b34"
+      }
+    }
+  },
+  {
     "name": "creditcardcontracts",
     "path": "/Files",
     "target": {
