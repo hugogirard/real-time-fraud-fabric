@@ -251,6 +251,10 @@ module function 'core/function/function.bicep' = {
       appRegistrationFunction.outputs.identifierUris,
       [appRegistrationFunction.outputs.applicationId]
     )
+    allowedOrigins: [
+      'https://${frontEndResourceName}.azurewebsites.net'
+      'http://localhost:4200'
+    ]
   }
 }
 

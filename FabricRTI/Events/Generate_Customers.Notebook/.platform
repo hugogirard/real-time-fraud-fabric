@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "Generate_Customers",
+    "description": "Generates synthetic customer profiles and ingests them into the MyFraud_EH Eventhouse Customers table."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "b7e3c2a8-1f4d-4e6a-9c8b-5a3e7d1f2c4a"
+  }
+}

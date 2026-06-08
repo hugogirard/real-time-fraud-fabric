@@ -9,6 +9,7 @@ param appInsightResourceName string
 param foundryResourceName string
 param appRegistrationClientId string
 param allowedAudiences array
+param allowedOrigins array = []
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -47,6 +48,12 @@ resource flexFunctionApp 'Microsoft.Web/sites@2025-03-01' = {
   properties: {
     serverFarmId: flexFunctionPlan.id
     httpsOnly: true
+    siteConfig: {
+      cors: {
+        allowedOrigins: allowedOrigins
+        supportCredentials: false
+      }
+    }
     functionAppConfig: {
       deployment: {
         storage: {

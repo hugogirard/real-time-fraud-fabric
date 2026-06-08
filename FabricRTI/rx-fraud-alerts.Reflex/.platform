@@ -2,7 +2,8 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
     "type": "Reflex",
-    "displayName": "FraudEvent"
+    "displayName": "rx-fraud-alerts",
+    "description": "Reflex (Activator) for credit-card fraud alerts. Configure the Cardholder object and Fraud Alert Email rule in the Fabric UI per FabricRTI/Readme.md."
   },
   "config": {
     "version": "2.0",

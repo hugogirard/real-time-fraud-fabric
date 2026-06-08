@@ -1,0 +1,10 @@
+[
+  {
+    "uniqueIdentifier": "f1a2b3c4-d5e6-4789-a012-3456789abcde",
+    "payload": {
+      "name": "Fraud detection",
+      "type": "samples"
+    },
+    "type": "container-v1"
+  }
+]

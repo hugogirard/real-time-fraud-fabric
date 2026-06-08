@@ -15,10 +15,12 @@
 # This notebook generates realistic synthetic credit card transaction data for a **Real-Time Intelligence Fraud Detection demo** on Microsoft Fabric.
 # 
 # **What it produces:**
-# - **User Profiles** — 50 synthetic cardholders with demographics, home location, and credit limits
 # - **Transactions** — ~10,000+ credit card transactions compressed into a 30-minute real-time stream
 # - **Fraud Labels** — ~3-5% of transactions are fraudulent with realistic anomaly patterns
 # - **Derived Features** — Distance from home, rolling averages, velocity features, and more
+# 
+# **Input required:**
+# - A **Customers table** in a Fabric Eventhouse (KQL database) containing user profiles with demographics, home location, and Entra ID identities (populated by `Generate_Customers`).
 # 
 # **Fraud patterns injected:**
 # - Unusually high transaction amounts
@@ -34,11 +36,11 @@
 
 # ## 1. Install and Import Required Libraries
 # 
-# Install the `Faker` library for generating realistic names and addresses, then import all required packages.
+# Install `Faker`, the Kusto SDKs, and the Event Hub SDK, then import all required packages.
 
 # CELL ********************
 
-%pip install faker --quiet
+%pip install faker azure-kusto-data azure-eventhub --quiet
 
 # METADATA ********************
 
@@ -77,26 +79,32 @@ print("Libraries imported successfully.")
 
 # ## 2. Define Configuration Parameters
 # 
-# Set up all configurable parameters: number of users, date range, fraud ratio, and transaction volume.
+# Set up all configurable parameters: Eventhouse connection, date range, fraud ratio, and transaction volume.
 
 # CELL ********************
 
 # ── Configuration ──────────────────────────────────────────
-NUM_USERS = 5                           # Number of synthetic cardholders
 START_DATE = datetime(2025, 1, 1)       # Transaction window start
 END_DATE = datetime(2025, 6, 30)        # Transaction window end
 FRAUD_RATIO = 0.04                      # Target ~4% fraud rate
 AVG_TXN_PER_USER_PER_DAY = 2            # Average daily transactions per user
 RANDOM_SEED = 42
 
+# ── Eventhouse KQL Database Configuration ─────────────────
+# Replace with your Eventhouse Query URI and KQL database name.
+# Query URI is on the Eventhouse "Database details" pane in Fabric.
+EVENTHOUSE_URI = "https://<your-eventhouse>.kusto.fabric.microsoft.com"  # Eventhouse Query URI
+KQL_DATABASE = "MyFraud_EH"                                              # KQL database name
+CUSTOMERS_TABLE = "Customers"                                            # Table name in the Eventhouse
+
 # Derived
 TOTAL_DAYS = (END_DATE - START_DATE).days
-ESTIMATED_TOTAL_TXN = int(NUM_USERS * AVG_TXN_PER_USER_PER_DAY * TOTAL_DAYS)
 
-print(f"Users: {NUM_USERS}")
-print(f"Date range: {START_DATE.date()} → {END_DATE.date()} ({TOTAL_DAYS} days)")
-print(f"Fraud ratio: {FRAUD_RATIO:.0%}")
-print(f"Estimated transactions: ~{ESTIMATED_TOTAL_TXN:,}")
+print(f"Eventhouse URI:  {EVENTHOUSE_URI}")
+print(f"KQL Database:    {KQL_DATABASE}")
+print(f"Customers Table: {CUSTOMERS_TABLE}")
+print(f"Date range:      {START_DATE.date()} → {END_DATE.date()} ({TOTAL_DAYS} days)")
+print(f"Fraud ratio:     {FRAUD_RATIO:.0%}")
 
 # METADATA ********************
 
@@ -107,98 +115,34 @@ print(f"Estimated transactions: ~{ESTIMATED_TOTAL_TXN:,}")
 
 # MARKDOWN ********************
 
-# ## 3. Create Synthetic User Profiles
+# ## 3. Load Customer Profiles from Eventhouse
 # 
-# Generate 50 realistic cardholder profiles with demographics, home location (lat/lon), and credit limits. Users are distributed across cities in the **United States, Canada, Brazil, and Costa Rica**.
+# Query the **Customers** table in the Eventhouse KQL database. The table must contain columns such as `user_id`, `first_name`, `last_name`, `email`, `home_lat`, `home_lon`, `credit_limit`, etc. Run the `Generate_Customers` notebook first if the table is empty.
 
 # CELL ********************
 
-# Major cities across the Americas with approximate lat/lon for realistic geo distribution
-AMERICAS_CITIES = [
-    # United States
-    ("New York", "NY", 40.7128, -74.0060),
-    ("Los Angeles", "CA", 34.0522, -118.2437),
-    ("Chicago", "IL", 41.8781, -87.6298),
-    ("Houston", "TX", 29.7604, -95.3698),
-    ("Phoenix", "AZ", 33.4484, -112.0740),
-    ("Philadelphia", "PA", 39.9526, -75.1652),
-    ("San Antonio", "TX", 29.4241, -98.4936),
-    ("San Diego", "CA", 32.7157, -117.1611),
-    ("Dallas", "TX", 32.7767, -96.7970),
-    ("San Jose", "CA", 37.3382, -121.8863),
-    ("Austin", "TX", 30.2672, -97.7431),
-    ("Jacksonville", "FL", 30.3322, -81.6557),
-    ("Fort Worth", "TX", 32.7555, -97.3308),
-    ("Columbus", "OH", 39.9612, -82.9988),
-    ("Charlotte", "NC", 35.2271, -80.8431),
-    ("Indianapolis", "IN", 39.7684, -86.1581),
-    ("Seattle", "WA", 47.6062, -122.3321),
-    ("Denver", "CO", 39.7392, -104.9903),
-    ("Nashville", "TN", 36.1627, -86.7816),
-    ("Portland", "OR", 45.5152, -122.6784),
-    ("Miami", "FL", 25.7617, -80.1918),
-    ("Atlanta", "GA", 33.7490, -84.3880),
-    ("Boston", "MA", 42.3601, -71.0589),
-    ("Las Vegas", "NV", 36.1699, -115.1398),
-    ("Minneapolis", "MN", 44.9778, -93.2650),
-    # Canada
-    ("Toronto", "ON", 43.6532, -79.3832),
-    ("Vancouver", "BC", 49.2827, -123.1207),
-    ("Montreal", "QC", 45.5017, -73.5673),
-    ("Calgary", "AB", 51.0447, -114.0719),
-    ("Ottawa", "ON", 45.4215, -75.6972),
-    ("Edmonton", "AB", 53.5461, -113.4938),
-    ("Winnipeg", "MB", 49.8951, -97.1384),
-    ("Halifax", "NS", 44.6488, -63.5752),
-    # Brazil
-    ("São Paulo", "SP", -23.5505, -46.6333),
-    ("Rio de Janeiro", "RJ", -22.9068, -43.1729),
-    ("Brasília", "DF", -15.7975, -47.8919),
-    ("Salvador", "BA", -12.9714, -38.5124),
-    ("Belo Horizonte", "MG", -19.9167, -43.9345),
-    ("Curitiba", "PR", -25.4284, -49.2733),
-    ("Recife", "PE", -8.0476, -34.8770),
-    ("Porto Alegre", "RS", -30.0346, -51.2177),
-    # Costa Rica
-    ("San José", "SJ", 9.9281, -84.0907),
-    ("Alajuela", "AL", 10.0162, -84.2115),
-    ("Cartago", "CA", 9.8643, -83.9194),
-    ("Heredia", "HE", 10.0024, -84.1165),
-    ("Liberia", "GU", 10.6350, -85.4377),
-]
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.kusto.data.helpers import dataframe_from_result_table
 
-def generate_user_profiles(n_users):
-    """Generate synthetic user profiles with realistic attributes."""
-    profiles = []
-    for i in range(n_users):
-        city, state, lat, lon = random.choice(AMERICAS_CITIES)
-        # Add small random offset to lat/lon so users in same city aren't identical
-        home_lat = lat + np.random.uniform(-0.15, 0.15)
-        home_lon = lon + np.random.uniform(-0.15, 0.15)
-        
-        gender = random.choice(["M", "F"])
-        first_name = fake.first_name_male() if gender == "M" else fake.first_name_female()
-        last_name = fake.last_name()
-        
-        profile = {
-            "user_id": f"U{i+1:04d}",
-            "first_name": first_name,
-            "last_name": last_name,
-            "age": np.random.randint(21, 72),
-            "gender": gender,
-            "home_city": city,
-            "home_state": state,
-            "home_lat": round(home_lat, 4),
-            "home_lon": round(home_lon, 4),
-            "credit_limit": round(random.choice([3000, 5000, 7500, 10000, 15000, 20000, 30000, 50000]), 2),
-            "account_created": fake.date_between(start_date="-5y", end_date="-6m"),
-        }
-        profiles.append(profile)
-    return pd.DataFrame(profiles)
+# ── Connect to Eventhouse using Fabric managed identity ───
+access_token = notebookutils.credentials.getToken(EVENTHOUSE_URI)
+kcsb = KustoConnectionStringBuilder.with_aad_application_token_authentication(
+    EVENTHOUSE_URI, access_token
+)
+kusto_client = KustoClient(kcsb)
 
-users_df = generate_user_profiles(NUM_USERS)
-print(f"Generated {len(users_df)} user profiles.\n")
-users_df.head(10)
+# ── Query customer profiles from Eventhouse ───────────────
+query = f"{CUSTOMERS_TABLE} | take 1000000"  # Retrieve all customers
+result = kusto_client.execute(KQL_DATABASE, query)
+users_df = dataframe_from_result_table(result.primary_results[0])
+
+NUM_USERS = len(users_df)
+ESTIMATED_TOTAL_TXN = int(NUM_USERS * AVG_TXN_PER_USER_PER_DAY * TOTAL_DAYS)
+
+print(f"Loaded {NUM_USERS} customer profiles from Eventhouse ({KQL_DATABASE}.{CUSTOMERS_TABLE})")
+print(f"Estimated transactions: ~{ESTIMATED_TOTAL_TXN:,}")
+print(f"\nColumns: {list(users_df.columns)}")
+users_df[["user_id", "display_name", "user_principal_name", "street_address", "home_city", "home_state", "country", "postal_code"]]
 
 # METADATA ********************
 
@@ -209,9 +153,77 @@ users_df.head(10)
 
 # MARKDOWN ********************
 
-# ## 4. Define Merchant Categories and Transaction Patterns
+# ## 4. Define City Reference Data and Merchant Categories
 # 
-# Each merchant category has a list of realistic merchant names, typical amount ranges, and frequency weights that control how often a user shops there.
+# Define the cities used for transaction location generation, and merchant categories with realistic names, amount ranges, and frequency weights.
+
+# CELL ********************
+
+# Major cities across the Americas with approximate lat/lon and country info
+AMERICAS_CITIES = [
+    # United States
+    ("New York", "NY", "US", "10001", 40.7128, -74.0060),
+    ("Los Angeles", "CA", "US", "90001", 34.0522, -118.2437),
+    ("Chicago", "IL", "US", "60601", 41.8781, -87.6298),
+    ("Houston", "TX", "US", "77001", 29.7604, -95.3698),
+    ("Phoenix", "AZ", "US", "85001", 33.4484, -112.0740),
+    ("Philadelphia", "PA", "US", "19101", 39.9526, -75.1652),
+    ("San Antonio", "TX", "US", "78201", 29.4241, -98.4936),
+    ("San Diego", "CA", "US", "92101", 32.7157, -117.1611),
+    ("Dallas", "TX", "US", "75201", 32.7767, -96.7970),
+    ("San Jose", "CA", "US", "95101", 37.3382, -121.8863),
+    ("Austin", "TX", "US", "73301", 30.2672, -97.7431),
+    ("Jacksonville", "FL", "US", "32099", 30.3322, -81.6557),
+    ("Fort Worth", "TX", "US", "76101", 32.7555, -97.3308),
+    ("Columbus", "OH", "US", "43085", 39.9612, -82.9988),
+    ("Charlotte", "NC", "US", "28201", 35.2271, -80.8431),
+    ("Indianapolis", "IN", "US", "46201", 39.7684, -86.1581),
+    ("Seattle", "WA", "US", "98101", 47.6062, -122.3321),
+    ("Denver", "CO", "US", "80201", 39.7392, -104.9903),
+    ("Nashville", "TN", "US", "37201", 36.1627, -86.7816),
+    ("Portland", "OR", "US", "97201", 45.5152, -122.6784),
+    ("Miami", "FL", "US", "33101", 25.7617, -80.1918),
+    ("Atlanta", "GA", "US", "30301", 33.7490, -84.3880),
+    ("Boston", "MA", "US", "02101", 42.3601, -71.0589),
+    ("Las Vegas", "NV", "US", "89101", 36.1699, -115.1398),
+    ("Minneapolis", "MN", "US", "55401", 44.9778, -93.2650),
+    # Canada
+    ("Toronto", "ON", "CA", "M5A 1A1", 43.6532, -79.3832),
+    ("Vancouver", "BC", "CA", "V5K 0A1", 49.2827, -123.1207),
+    ("Montreal", "QC", "CA", "H2X 1Y4", 45.5017, -73.5673),
+    ("Calgary", "AB", "CA", "T2P 1J9", 51.0447, -114.0719),
+    ("Ottawa", "ON", "CA", "K1A 0A9", 45.4215, -75.6972),
+    ("Edmonton", "AB", "CA", "T5J 0N3", 53.5461, -113.4938),
+    ("Winnipeg", "MB", "CA", "R3C 0A1", 49.8951, -97.1384),
+    ("Halifax", "NS", "CA", "B3H 0A1", 44.6488, -63.5752),
+    # Brazil
+    ("São Paulo", "SP", "BR", "01000-000", -23.5505, -46.6333),
+    ("Rio de Janeiro", "RJ", "BR", "20000-000", -22.9068, -43.1729),
+    ("Brasília", "DF", "BR", "70000-000", -15.7975, -47.8919),
+    ("Salvador", "BA", "BR", "40000-000", -12.9714, -38.5124),
+    ("Belo Horizonte", "MG", "BR", "30100-000", -19.9167, -43.9345),
+    ("Curitiba", "PR", "BR", "80000-000", -25.4284, -49.2733),
+    ("Recife", "PE", "BR", "50000-000", -8.0476, -34.8770),
+    ("Porto Alegre", "RS", "BR", "90000-000", -30.0346, -51.2177),
+    # Costa Rica
+    ("San José", "SJ", "CR", "10101", 9.9281, -84.0907),
+    ("Alajuela", "AL", "CR", "20101", 10.0162, -84.2115),
+    ("Cartago", "CA", "CR", "30101", 9.8643, -83.9194),
+    ("Heredia", "HE", "CR", "40101", 10.0024, -84.1165),
+    ("Liberia", "GU", "CR", "50101", 10.6350, -85.4377),
+]
+
+# Country full names for display
+COUNTRY_NAMES = {"US": "United States", "CA": "Canada", "BR": "Brazil", "CR": "Costa Rica"}
+
+print(f"Defined {len(AMERICAS_CITIES)} reference cities across {len(COUNTRY_NAMES)} countries.")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
 
 # CELL ********************
 
@@ -325,8 +337,8 @@ def generate_normal_transaction(user, txn_date):
         # Occasional nearby-city transaction
         city_info = random.choice(AMERICAS_CITIES)
         merch_city, merch_state = city_info[0], city_info[1]
-        merch_lat = city_info[2] + np.random.uniform(-0.1, 0.1)
-        merch_lon = city_info[3] + np.random.uniform(-0.1, 0.1)
+        merch_lat = city_info[4] + np.random.uniform(-0.1, 0.1)
+        merch_lon = city_info[5] + np.random.uniform(-0.1, 0.1)
 
     return {
         "transaction_id": str(uuid.uuid4()),
@@ -450,7 +462,7 @@ all_transactions = []
 
 for _, user in users_df.iterrows():
     user_dict = user.to_dict()
-    
+
     # Determine number of fraud transactions for this user
     user_total_normal = int(np.random.poisson(AVG_TXN_PER_USER_PER_DAY * TOTAL_DAYS))
     user_total_fraud = max(1, int(user_total_normal * FRAUD_RATIO))
@@ -468,7 +480,7 @@ for _, user in users_df.iterrows():
         fraud_type = random.choice(FRAUD_TYPES)
         txn = generate_fraud_transaction(user_dict, fraud_date, fraud_type)
         all_transactions.append(txn)
-        
+
         # For rapid_fire fraud, add 2-4 extra quick transactions
         if fraud_type == "rapid_fire":
             for _ in range(random.randint(2, 4)):
@@ -532,6 +544,8 @@ txn_df.head(10)
 # - **rolling_avg_amount** — User's rolling 7-day average transaction amount
 # - **txn_count_last_1h / txn_count_last_24h** — Velocity features
 # - **amount_deviation** — How far this amount deviates from the user's mean
+# 
+# We also merge `email` and `display_name` from the Customers table into each event so the Activator rule can address the right cardholder.
 
 # CELL ********************
 
@@ -544,9 +558,9 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
     return 2 * R * np.arcsin(np.sqrt(a))
 
-# Merge user home location into transactions
+# Merge user home location + identity fields into transactions
 txn_df = txn_df.merge(
-    users_df[["user_id", "home_lat", "home_lon"]],
+    users_df[["user_id", "home_lat", "home_lon", "email", "display_name"]],
     on="user_id",
     how="left",
     suffixes=("", "_home"),
@@ -606,7 +620,7 @@ txn_df["txn_count_last_24h"] = txn_df.groupby("user_id", group_keys=False).apply
 # Drop helper columns
 txn_df = txn_df.drop(columns=["home_lat", "home_lon"])
 
-print(f"Added {6} derived features. Final shape: {txn_df.shape}")
+print(f"Added derived features. Final shape: {txn_df.shape}")
 print(f"\nAll columns: {list(txn_df.columns)}")
 
 # METADATA ********************
@@ -618,85 +632,19 @@ print(f"\nAll columns: {list(txn_df.columns)}")
 
 # MARKDOWN ********************
 
-# ## 10. Explore Transaction Data Distribution
+# ## 10. Verify Customers Table in Eventhouse
 # 
-# Visualize fraud vs. legitimate transaction patterns by amount, category, time, and distance from home.
+# Validate that the **Customers** table used in Section 3 is accessible and contains the expected data. This step reuses the Kusto client established earlier.
 
 # CELL ********************
 
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.rcParams["figure.figsize"] = (14, 4)
-matplotlib.rcParams["figure.dpi"] = 100
-
-fig, axes = plt.subplots(1, 4, figsize=(20, 4))
-
-# 1. Amount distribution by fraud label
-for label, color, name in [(0, "#2ecc71", "Legitimate"), (1, "#e74c3c", "Fraud")]:
-    subset = txn_df[txn_df["is_fraud"] == label]["amount"]
-    axes[0].hist(subset.clip(upper=2000), bins=50, alpha=0.6, color=color, label=name)
-axes[0].set_title("Transaction Amount Distribution")
-axes[0].set_xlabel("Amount ($)")
-axes[0].legend()
-
-# 2. Fraud count by category
-fraud_by_cat = txn_df[txn_df["is_fraud"] == 1].groupby("merchant_category").size().sort_values()
-fraud_by_cat.plot.barh(ax=axes[1], color="#e74c3c", alpha=0.8)
-axes[1].set_title("Fraud Count by Merchant Category")
-axes[1].set_xlabel("Fraud Transactions")
-
-# 3. Transactions by hour of day
-for label, color, name in [(0, "#2ecc71", "Legitimate"), (1, "#e74c3c", "Fraud")]:
-    subset = txn_df[txn_df["is_fraud"] == label]
-    hourly = subset.groupby("hour_of_day").size()
-    axes[2].plot(hourly.index, hourly.values, color=color, label=name, marker="o", markersize=3)
-axes[2].set_title("Transactions by Hour of Day")
-axes[2].set_xlabel("Hour")
-axes[2].legend()
-
-# 4. Distance from home
-for label, color, name in [(0, "#2ecc71", "Legitimate"), (1, "#e74c3c", "Fraud")]:
-    subset = txn_df[txn_df["is_fraud"] == label]["distance_from_home_km"]
-    axes[3].hist(subset.clip(upper=5000), bins=50, alpha=0.6, color=color, label=name)
-axes[3].set_title("Distance from Home (km)")
-axes[3].set_xlabel("Distance (km)")
-axes[3].legend()
-
-plt.tight_layout()
-plt.show()
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-# Summary statistics
-print("=" * 60)
-print("FRAUD TYPE BREAKDOWN")
-print("=" * 60)
-print(txn_df[txn_df["is_fraud"] == 1]["fraud_type"].value_counts().to_string())
-
-print("\n" + "=" * 60)
-print("AMOUNT STATISTICS BY FRAUD LABEL")
-print("=" * 60)
-print(txn_df.groupby("is_fraud")["amount"].describe().round(2).to_string())
-
-print("\n" + "=" * 60)
-print("DISTANCE FROM HOME (KM) BY FRAUD LABEL")
-print("=" * 60)
-print(txn_df.groupby("is_fraud")["distance_from_home_km"].describe().round(2).to_string())
-
-print("\n" + "=" * 60)
-print("SAMPLE FRAUDULENT TRANSACTIONS")
-print("=" * 60)
-txn_df[txn_df["is_fraud"] == 1].sample(10, random_state=42)[
-    ["user_id", "timestamp", "amount", "merchant_name", "merchant_category",
-     "merchant_city", "fraud_type", "distance_from_home_km"]
-]
+# ── Verify Customers table row count ──────────────────────
+result = kusto_client.execute(KQL_DATABASE, f"{CUSTOMERS_TABLE} | count")
+count_table = dataframe_from_result_table(result.primary_results[0])
+print(f"✅ {CUSTOMERS_TABLE} table in {KQL_DATABASE} has {count_table.iloc[0, 0]} rows.")
+print(f"\n💡 Customers were loaded from this table in Section 3.")
+print(f"   Transactions can be joined with customers in KQL:")
+print(f"   CCTransactions | join kind=inner {CUSTOMERS_TABLE} on user_id")
 
 # METADATA ********************
 
@@ -713,32 +661,15 @@ txn_df[txn_df["is_fraud"] == 1].sample(10, random_state=42)[
 # 
 # ### How to set up the Eventstream
 # 
-# 1. **Create an Eventstream** — In your Fabric workspace, click **+ New item → Eventstream**. Give it a name (e.g., `es-credit-card-transactions`).
-# 2. **Add a Custom App source** — In the Eventstream canvas, click **New source → Custom App**. Name it (e.g., `credit-card-generator`). Click **Add**.
-# 3. **Copy the connection string** — Once the Custom App source is created, click on it and select the **Keys** tab. Copy the **Connection string–primary key** value. It looks like:
-#    ```
-#    Endpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=...;SharedAccessKey=...;EntityPath=...
-#    ```
-# 4. **Paste it below** — Replace the `EVENT_HUB_CONNECTION_STRING` placeholder in the next cell.
-# 5. **Add a destination** — In the Eventstream canvas, add a destination:
-#    - **KQL Database** → to route events into an Eventhouse table for KQL queries
-#    - **Lakehouse** → to persist events as Delta tables
-#    - **Reflex** → to trigger real-time alerts on fraud patterns
-# 6. **Run the cells below** — The generator will compress 6 months of transactions into 30 minutes of real-time streaming, sending events at their proportional pace with progress updates.
+# 1. Open `CreditCardTransactions_es` in the workspace (synced from this Git repo).
+# 2. Switch the canvas to **Edit mode**, then click the **CreditCardTransactions** source node.
+# 3. On the right pane, select the **Keys** tab and copy the **Connection string–primary key**.
+# 4. Store the connection string as a secret in Azure Key Vault (e.g., `EventHubConnectionString`).
+# 5. Update `KEY_VAULT_URL` and `SECRET_NAME` below.
 # 
-# > **Note:** The Event Hub name (`EntityPath`) is already embedded in the connection string — you do **not** need to set it separately.
-
-
-# CELL ********************
-
-%pip install azure-eventhub --quiet
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
+# > **Note:** The Event Hub name (`EntityPath`) is already embedded in the connection string — you do not need to set it separately.
+# 
+# > **Security:** The connection string is retrieved at runtime from Azure Key Vault using `notebookutils.credentials.getSecret`, so no secrets are stored in the notebook.
 
 # CELL ********************
 
@@ -747,9 +678,13 @@ import time
 from datetime import datetime, timedelta, timezone
 from azure.eventhub import EventHubProducerClient, EventData
 
-# ── Eventstream Configuration ─────────────────────────────
-# Paste your Eventstream Custom App connection string here
-EVENT_HUB_CONNECTION_STRING = "<your-eventstream-connection-string>"
+# ── Azure Key Vault Configuration ─────────────────────────
+# Replace with your Key Vault URL and the secret name storing the connection string.
+KEY_VAULT_URL = "https://<your-keyvault-name>.vault.azure.net/"
+SECRET_NAME = "EventHubConnectionString"
+
+# Retrieve the Event Hub connection string from Azure Key Vault
+EVENT_HUB_CONNECTION_STRING = notebookutils.credentials.getSecret(KEY_VAULT_URL, SECRET_NAME)
 
 # ── Streaming Parameters ──────────────────────────────────
 STREAM_DURATION_MINUTES = 30   # Total wall-clock streaming window
@@ -778,7 +713,8 @@ stream_df["stream_timestamp"] = stream_df["_stream_offset"].apply(
 
 # Columns to send (exclude internal helper cols)
 send_cols = [
-    "transaction_id", "user_id", "stream_timestamp", "amount",
+    "transaction_id", "user_id", "email", "display_name",
+    "stream_timestamp", "amount",
     "merchant_name", "merchant_category", "merchant_city", "merchant_state",
     "merchant_lat", "merchant_lon", "is_fraud", "fraud_type",
     "distance_from_home_km", "hour_of_day", "day_of_week",
