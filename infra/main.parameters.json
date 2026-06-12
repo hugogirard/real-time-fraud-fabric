@@ -17,9 +17,6 @@
     "userPrincipalId": {
       "value": "${USER_PRINCIPAL_ID}"
     },
-    "publisherEmail": {
-      "value": "${PUBLISHER_EMAIL}"
-    },
     "oauth2FuncId": {
       "value": "${OAUTH2_FUNC_ID}"
     }

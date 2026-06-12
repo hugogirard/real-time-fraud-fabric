@@ -18,8 +18,8 @@ param administrationMember string
 @description('The user principal ID')
 param userPrincipalId string = ''
 
-@description('The publisher email for notification in APIM')
-param publisherEmail string
+// @description('The publisher email for notification in APIM')
+// param publisherEmail string
 
 @description('OAuth2 permission ID for the function')
 param oauth2FuncId string = newGuid()
@@ -259,14 +259,14 @@ module function 'core/function/function.bicep' = {
 }
 
 // APIM
-module apim 'core/apim/apim.bicep' = {
-  scope: rg
-  params: {
-    location: location
-    publisherEmail: publisherEmail
-    resourceName: '${abbrs.apiManagementService}${resourceToken}'
-  }
-}
+// module apim 'core/apim/apim.bicep' = {
+//   scope: rg
+//   params: {
+//     location: location
+//     publisherEmail: publisherEmail
+//     resourceName: '${abbrs.apiManagementService}${resourceToken}'
+//   }
+// }
 
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = '${acr.outputs.resourceName}.azurecr.io'
 output AZURE_CONTAINER_REGISTRY_NAME string = acr.outputs.resourceName
