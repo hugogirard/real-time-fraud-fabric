@@ -47,6 +47,22 @@ You also need the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/instal
 
    This will deploy all the infrastructure defined under the `infra/` folder (Bicep templates) into your Azure subscription.
 
+## Configure the Microsoft Fabric Workspace
+
+Once `azd up` has provisioned the Azure resources, the next step is to set up the **Real-Time Intelligence** workspace in Microsoft Fabric. This is where the Eventhouse, Eventstream, notebooks, and Reflex (Activator) that power the fraud-detection demo live.
+
+Follow the step-by-step guide in [`FabricRTI/Readme.md`](./FabricRTI/Readme.md), which walks you through:
+
+1. **Connecting the Fabric workspace to this Git repo** (Git folder set to `/FabricRTI`) so the Eventhouse, KQL database, Eventstream, notebooks, and Reflex item are provisioned automatically on sync.
+2. **Verifying the KQL database schema** (`Customers` and `CCTransactions` tables) created by `DatabaseSchema.kql` on sync.
+3. **Generating synthetic customers** with the `Generate_Customers` notebook.
+4. **Wiring the Eventstream connection string** into the Azure Key Vault deployed by `azd` (secret name `EventHubConnectionString`).
+5. **Granting the Fabric workspace identity** the `Key Vault Secrets User` role so the notebooks can fetch the secret at runtime.
+6. **Streaming transactions** with the `Generate_Credit_Card_Transactions` notebook.
+7. **Configuring the Reflex (Activator) rule** that sends fraud-alert emails — see [`src/fraudstream/rti/README-fraud-alerts.md`](./src/fraudstream/rti/README-fraud-alerts.md) for the click-by-click walk-through.
+
+> **Prerequisites for the Fabric setup:** a Fabric-enabled workspace assigned to a Fabric capacity, the Azure Key Vault deployed by `azd up`, and an Entra ID tenant where you can create test users.
+
 ## Troubleshooting
 
 ### "refresh token has expired" error
