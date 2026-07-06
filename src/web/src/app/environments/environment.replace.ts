@@ -5,6 +5,6 @@ export const environment = {
     apiScopes: ['api://func-kfj6oovojuwkw/user_impersonation'],
     apiBaseUrl: 'https://func-kfj6oovojuwkw.azurewebsites.net',
     redirectUrl: 'https://web-kfj6oovojuwkw.azurewebsites.net',
-    appInsightKey: 'InstrumentationKey=fa16ea63-4e27-462a-9ff0-0e03e24a1581;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=5534d9f4-51ff-4a73-853b-e33c38ec79a8'
+    appInsightKey: 'InstrumentationKey=e592e046-6ecf-428d-a744-5bf6f63a9cab;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=58a63076-34b1-4f18-b8a3-c86e12244f16'
 }
 

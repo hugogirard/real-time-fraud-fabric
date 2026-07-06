@@ -11,7 +11,7 @@ This folder is the **Git-syncable definition** of a complete Microsoft Fabric **
 | `Events/CreditCardTransactions_es.Eventstream/` | Eventstream | Custom App source → ProcessedIngestion destination that writes incoming JSON events into `CCTransactions` (column auto-mapping by name). |
 | `Events/Generate_Customers.Notebook/` | Notebook | Generates synthetic customer profiles with Entra ID–compatible UPNs and ingests them straight into the Eventhouse `Customers` table. |
 | `Events/Generate_Credit_Card_Transactions.Notebook/` | Notebook | Reads customers from the Eventhouse, generates ~6 months of synthetic transactions with realistic fraud patterns, and streams them to the Eventstream over 30 minutes. |
-| `rx-fraud-alerts.Reflex/` | Reflex (Activator) | Container for the fraud-alert rule. The rule and Cardholder object must be configured in the Fabric UI (see Step 7). |
+| `rx-fraud-alerts.Reflex/` | Reflex (Activator) | Container for the fraud-alert rule. The rule and Cardholder object must be configured in the Fabric UI (see Step 9). |
 
 ## Architecture
 
@@ -39,16 +39,80 @@ This folder is the **Git-syncable definition** of a complete Microsoft Fabric **
 
 > Prerequisites: a Fabric-enabled workspace assigned to a Fabric capacity, an Azure Key Vault for the Event Hub connection string, and an Entra ID tenant where you can create test users.
 
-### 1. Connect the workspace to this Git repo
+### 1. Create a Microsoft Fabric Workspace
 
-1. In Fabric, open (or create) the target **workspace**.
-2. **Workspace settings** → **Git integration** → **Connect**.
-3. Pick this repository, your branch, and set the **Git folder** to `/FabricRTI`.
-4. Click **Connect and sync**.
+1. Go to the [Microsoft Fabric](https://app.fabric.microsoft.com/) portal. Click **Workspaces** in the left navigation, then click **+ New workspace**.
 
-After sync, the workspace will contain the Eventhouse, KQL database, Eventstream, two notebooks, and the Reflex item.
+   ![Open the Workspaces panel and click + New workspace](../images/workspace/step1.png)
 
-### 2. Verify the KQL database schema
+2. Enter a workspace name (e.g. `fraud-real-time-detection`). Expand the **Advanced** section.
+
+   ![Name the workspace and expand Advanced settings](../images/workspace/step2.png)
+
+3. Select the **Fabric** workspace type. Under **Details**, choose your Fabric capacity from the dropdown, then click **Apply**.
+
+   ![Select Fabric workspace type and assign a capacity](../images/workspace/step3.png)
+
+### 2. Resize the Fabric Capacity
+
+The deployment creates the lowest Fabric SKU (**F2**) by default. This is not enough to run the demo workloads (notebooks, Eventstream, and Reflex all require more capacity). Scale the capacity up before proceeding.
+
+> **Cost note:** The Fabric capacity automatically pauses when nothing is running, so you are only charged while workloads are active.
+
+1. In the Azure portal, navigate to your **Fabric Capacity** resource (e.g. under **rg-fraud-detection**).
+2. In the left menu, go to **Scale** → **Change size**.
+3. Select **F16** (16 Capacity Units) or higher, then click **Resize**.
+
+   ![Change the Fabric capacity SKU to F16 or higher](../images/resize.png)
+
+### 3. Connect the workspace to this Git repo
+
+1. First, you need a personal access token (PAT) in GitHub. Go to the developer portal.
+
+   ![Dev Portal](../images/devportal.png)
+
+2. Create your PAT with the permissions shown below.
+
+   ![PAT Token](../images/github1.png)
+   ![PAT Token](../images/github2.png)
+
+   Click **Generate token** and save it — you will not be able to view it again.
+
+3. In the Fabric portal, click the **Settings** gear icon in the top bar, then under **Governance and administration**, click **Admin portal**.
+
+   ![Open the Admin portal](../images/adminportal.png)
+
+4. In the Admin portal, go to **Tenant settings**, scroll to the **Git integration** section, and ensure **"Users can synchronize workspace items with their Git repositories"** is toggled to **Enabled** and applied to **The entire organization**.
+
+   ![Enable Git integration in Tenant settings](../images/git.png)
+
+5. In Fabric, open (or create) the target **workspace**.
+6. Go to **Workspace settings** → **Git integration** → **Connect**.
+7. Select this repository, your branch, and set the **Git folder** to `/FabricRTI`.
+
+   ![Connect to Git repository](../images/github3.png)
+
+8. Click **Add**.
+
+9. Click **Connect**.
+
+10. A new window will appear.
+
+    ![Select branch and folder](../images/github4.png)
+
+    Select the **main** branch, set the Git folder to **FabricRTI**, and click **Connect and sync**.
+
+11. Wait for the sync to complete.
+
+    ![Sync in progress](../images/github5.png)
+
+    After sync, the workspace will contain the Eventhouse, KQL database, Eventstream, two notebooks, and the Reflex item.
+
+12. Once everything is synced, you should see the following confirmation window.
+
+    ![Sync complete](../images/github6.png)
+
+### 4. Verify the KQL database schema
 
 `DatabaseSchema.kql` runs automatically on sync and creates the `Customers` and `CCTransactions` tables plus their ingestion mappings. To confirm:
 
@@ -56,7 +120,7 @@ After sync, the workspace will contain the Eventhouse, KQL database, Eventstream
 2. Run `.show tables` — you should see `Customers` and `CCTransactions`.
 3. Run `.show table Customers ingestion mappings` — you should see `Customers_mapping`.
 
-### 3. Generate customers
+### 5. Generate customers
 
 1. Open **Generate_Customers**.
 2. In the **Configuration** cell, set:
@@ -69,7 +133,7 @@ After sync, the workspace will contain the Eventhouse, KQL database, Eventstream
 
 > **Optional — provision real Entra ID users:** Run `src/fraudstream/rti/Create-EntraID-Customers.ps1` against the same UPN domain so the email addresses in `Customers.email` are deliverable. The PowerShell scripts in `src/fraudstream/rti/` cover account creation and password reset.
 
-### 4. Get the Eventstream connection string
+### 6. Get the Eventstream connection string
 
 The `CreditCardTransactions_es` Eventstream is pre-defined with a **Custom App** source. You need its connection string so the transaction generator can publish events.
 
@@ -80,21 +144,21 @@ The `CreditCardTransactions_es` Eventstream is pre-defined with a **Custom App**
 
 > The Event Hub name (`EntityPath`) is embedded in the connection string — you do not need to set it separately.
 
-### 5. Grant the workspace identity access to Key Vault
+### 7. Grant the workspace identity access to Key Vault
 
 Give the **Fabric workspace identity** (or the user running the notebook) the **Key Vault Secrets User** role on the Key Vault so `notebookutils.credentials.getSecret` can fetch the secret at runtime.
 
-### 6. Stream transactions
+### 8. Stream transactions
 
 1. Open **Generate_Credit_Card_Transactions**.
-2. In the **Configuration** cell, set `EVENTHOUSE_URI` and `KQL_DATABASE` (same values as Step 3).
+2. In the **Configuration** cell, set `EVENTHOUSE_URI` and `KQL_DATABASE` (same values as Step 4).
 3. In the **Stream Transactions to Fabric Eventstream** cell, set:
    - `KEY_VAULT_URL` — e.g. `https://my-kv.vault.azure.net/`.
    - `SECRET_NAME` — defaults to `EventHubConnectionString`.
 4. **Run all cells**. Sections 3–10 build the transaction set in memory (a few minutes). The streaming cell then plays them back to the Eventstream over 30 minutes.
 5. Watch the Eventstream canvas: events should appear in the data preview within seconds, and rows will start landing in `CCTransactions` shortly after.
 
-### 7. Configure the Reflex (Activator) rule
+### 9. Configure the Reflex (Activator) rule
 
 The `rx-fraud-alerts` Reflex item is created empty on purpose — the Cardholder object and Fraud Alert Email rule are easier to author in the Fabric UI than to maintain in Git.
 
