@@ -117,17 +117,32 @@ The deployment creates the lowest Fabric SKU (**F2**) by default. This is not en
 `DatabaseSchema.kql` runs automatically on sync and creates the `Customers` and `CCTransactions` tables plus their ingestion mappings. To confirm:
 
 1. Open the **MyFraud_EH** KQL database.
-2. Run `.show tables` — you should see `Customers` and `CCTransactions`.
-3. Run `.show table Customers ingestion mappings` — you should see `Customers_mapping`.
+
+You should see two tables
+
+![Sync complete](../images/db1.png)
+![Sync complete](../images/db2.png)
+
 
 ### 5. Generate customers
 
-1. Open **Generate_Customers**.
+1. Open **Generate_Customers** in the Events in the workspace.
+
+![Sync complete](../images/customer1.png)
+![Sync complete](../images/customer2.png)
+
 2. In the **Configuration** cell, set:
    - `NUM_USERS` — how many synthetic cardholders to create.
    - `ENTRA_ID_DOMAIN` — your tenant domain (e.g. `contoso.onmicrosoft.com`).
    - `EVENTHOUSE_URI` — the **Query URI** from the Eventhouse **Database details** pane.
    - `KQL_DATABASE` — defaults to `MyFraud_EH`.
+
+![Sync complete](../images/cell1.png)
+
+To find the Event URI, go back to the Database and to the right you will see this screen.
+
+![Sync complete](../images/cell2.png)
+
 3. **Run all cells**. The notebook authenticates with the Fabric workspace identity, generates the profiles, and queues them for ingestion into `Customers`.
 4. Wait 1–5 minutes, then run `Customers | count` in the KQL queryset to confirm the row count.
 
