@@ -4,7 +4,7 @@
     "payload": {
       "name": "EventStream",
       "metadata": {
-        "eventstreamArtifactId": "eaa7017d-49dc-4c9b-93e3-f08ba0d4d8c6"
+        "eventstreamArtifactId": "cf2182df-d3cb-4bdc-bf39-93f6267b5a23"
       }
     },
     "type": "eventstreamSource-v1"
