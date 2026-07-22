@@ -1,9 +1,9 @@
-import { Component, input, signal, effect, computed } from "@angular/core";
-import { DatePipe } from "@angular/common";
-import { FraudService } from "../../services/fraud.service";
-import { Message, Role } from "../../model/message";
+import { Component, input, signal, effect, afterRenderEffect, ViewChild, ElementRef } from "@angular/core";
 import { Session } from "../../model/session";
 import { Loading } from "../loading/loading";
+import { MsalService } from "@azure/msal-angular";
+import { MessageStore } from "../../stores/message.store";
+import { RemarkModule } from "ngx-remark";
 
 
 
@@ -12,26 +12,75 @@ import { Loading } from "../loading/loading";
     standalone: true,
     styleUrl: './chat.css',
     templateUrl: './chat.html',
-    imports: [DatePipe, Loading]
+    imports: [Loading, RemarkModule]
 })
 export class Chat {
 
     session = input<Session>();
-    messages = signal<Message[]>([]);
     isLoading = signal(false);
-    readonly loadingTitle = 'Loading conversation';
-    Role = Role;
+    isTyping = signal(false);
+    username: string | null = null;
+    initial: string | null = null;
+    userMessage = signal('');
+    @ViewChild('chatInput') chatInput!: ElementRef<HTMLInputElement>;
 
-    constructor(private fraudService: FraudService) {
-        effect(() => {
+    readonly loadingTitle = 'Loading conversation';
+
+    constructor(public messageStore: MessageStore, private authService: MsalService) {
+
+        // Auto-scroll chat to bottom: tracks messages() and streamingContent() signals,
+        // then runs after DOM update to keep the latest content visible.
+        afterRenderEffect(() => {
+            this.messageStore.messages();
+            this.messageStore.streamingContent();
+            const el = document.getElementById('chat-messages');
+            if (el) el.scrollTop = el.scrollHeight;
+        });
+
+        effect((onCleanup) => {
             const s = this.session();
-            if (s) {
-                this.isLoading.set(true);
-                this.fraudService.getMessages(s.id).subscribe(msgs => {
-                    this.messages.set(msgs);
-                    this.isLoading.set(false);
-                });
+            if (s && s.sessionId != '') {
+                // Set default message but show ... like someone is typing
+                this.isTyping.set(true);
+                const timer = setTimeout(() => {
+                    this.isTyping.set(false);
+                    this.messageStore.addWelcomeMessage();
+                }, 2000);
+                onCleanup(() => clearTimeout(timer));
             }
         });
+    }
+
+    onNewChat() {
+        this.isLoading.set(true);
+        this.messageStore.newSession().subscribe({
+            next: () => this.isLoading.set(false),
+            error: () => this.isLoading.set(false)
+        });
+    }
+
+    ngOnInit() {
+        this.username = this.authService.instance.getActiveAccount()?.name ?? null;
+
+        if (this.username) {
+            const elements = this.username.split(' ');
+            if (elements.length >= 2) {
+                const firstLetter = elements[0][0];
+                const lastLetter = elements[elements.length - 1][0];
+                this.initial = `${firstLetter}${lastLetter}`
+            }
+        }
+    }
+
+    onSend() {
+        if (!this.messageStore.isStreaming()) {
+            this.messageStore.sendMessage(this.userMessage());
+            this.userMessage.set('');;
+            this.chatInput.nativeElement.focus();
+        }
+    }
+
+    logout() {
+        this.authService.logoutRedirect();
     }
 }

@@ -1,0 +1,247 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.42.1.51946",
+      "templateHash": "16935109193383788314"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources."
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "defaultValue": "fraud-alert",
+      "metadata": {
+        "description": "Name prefix for resources."
+      }
+    },
+    "alertRecipientEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "Security / Fraud Ops team email (CC recipient on every alert)."
+      }
+    },
+    "appUrl": {
+      "type": "string",
+      "defaultValue": "https://YOUR-APP-URL-HERE.azurewebsites.net",
+      "metadata": {
+        "description": "URL of the fraud investigation app. Use a placeholder until the app is deployed."
+      }
+    }
+  },
+  "variables": {
+    "logicAppName": "[format('{0}-logic-app', parameters('namePrefix'))]",
+    "office365ConnectionName": "[format('{0}-office365', parameters('namePrefix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[variables('office365ConnectionName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "displayName": "Office 365 Outlook — Fraud Alerts",
+        "api": {
+          "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'office365')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[variables('logicAppName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            },
+            "alertRecipientEmail": {
+              "defaultValue": "[parameters('alertRecipientEmail')]",
+              "type": "String"
+            },
+            "appUrl": {
+              "defaultValue": "[parameters('appUrl')]",
+              "type": "String"
+            }
+          },
+          "triggers": {
+            "When_Fabric_Activator_detects_fraud": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transaction_id": {
+                      "type": "string"
+                    },
+                    "user_id": {
+                      "type": "string"
+                    },
+                    "display_name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "merchant_name": {
+                      "type": "string"
+                    },
+                    "merchant_category": {
+                      "type": "string"
+                    },
+                    "merchant_city": {
+                      "type": "string"
+                    },
+                    "merchant_state": {
+                      "type": "string"
+                    },
+                    "fraud_type": {
+                      "type": "string"
+                    },
+                    "distance_from_home_km": {
+                      "type": "number"
+                    },
+                    "hour_of_day": {
+                      "type": "integer"
+                    },
+                    "day_of_week": {
+                      "type": "integer"
+                    },
+                    "amount_zscore": {
+                      "type": "number"
+                    },
+                    "txn_count_last_1h": {
+                      "type": "integer"
+                    },
+                    "txn_count_last_24h": {
+                      "type": "integer"
+                    },
+                    "stream_timestamp": {
+                      "type": "string"
+                    },
+                    "home_city": {
+                      "type": "string"
+                    },
+                    "home_state": {
+                      "type": "string"
+                    },
+                    "credit_limit": {
+                      "type": "number"
+                    },
+                    "fraud_history_html": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "actions": {
+            "Compose_Email_Body": {
+              "type": "Compose",
+              "runAfter": {},
+              "inputs": "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<style>\r\n  body { font-family: \"Segoe UI\", Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }\r\n  .container { max-width: 640px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\r\n  .header { background: linear-gradient(135deg, #c0392b, #e74c3c); color: #ffffff; padding: 24px 32px; }\r\n  .header h1 { margin: 0; font-size: 22px; font-weight: 600; }\r\n  .header p { margin: 6px 0 0; font-size: 14px; opacity: 0.9; }\r\n  .alert-badge { display: inline-block; background: #ffffff; color: #c0392b; font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 12px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; }\r\n  .body-content { padding: 24px 32px; }\r\n  .section-title { font-size: 14px; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; border-bottom: 2px solid #ecf0f1; padding-bottom: 6px; }\r\n  .section-title:first-child { margin-top: 0; }\r\n  .detail-table { width: 100%; border-collapse: collapse; }\r\n  .detail-table td { padding: 8px 0; font-size: 14px; vertical-align: top; }\r\n  .detail-table td:first-child { color: #7f8c8d; width: 180px; font-weight: 500; }\r\n  .detail-table td:last-child { color: #2c3e50; font-weight: 400; }\r\n  .amount-highlight { font-size: 28px; font-weight: 700; color: #c0392b; }\r\n  .fraud-type-badge { display: inline-block; background: #fdf2f2; color: #c0392b; font-weight: 600; font-size: 13px; padding: 4px 14px; border-radius: 6px; border: 1px solid #f5c6cb; }\r\n  .risk-indicators { background: #fff9f0; border: 1px solid #fdebd0; border-radius: 6px; padding: 14px 18px; margin: 16px 0; }\r\n  .risk-indicators h4 { margin: 0 0 8px; color: #e67e22; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }\r\n  .risk-indicators ul { margin: 0; padding-left: 18px; font-size: 13px; color: #7f6c3e; }\r\n  .risk-indicators li { margin-bottom: 4px; }\r\n  .cta-section { text-align: center; margin: 28px 0 12px; }\r\n  .cta-button { display: inline-block; background: linear-gradient(135deg, #2980b9, #3498db); color: #ffffff; font-weight: 600; font-size: 15px; padding: 14px 36px; border-radius: 6px; text-decoration: none; letter-spacing: 0.3px; }\r\n  .cta-button:hover { background: linear-gradient(135deg, #1c6ea4, #2980b9); }\r\n  .cta-note { font-size: 12px; color: #95a5a6; margin-top: 8px; }\r\n  .footer { background: #f8f9fa; padding: 18px 32px; text-align: center; font-size: 12px; color: #95a5a6; border-top: 1px solid #ecf0f1; }\r\n  .footer a { color: #3498db; text-decoration: none; }\r\n</style>\r\n</head>\r\n<body>\r\n<div class=\"container\">\r\n  <!-- Header -->\r\n  <div class=\"header\">\r\n    <h1>Fraud Alert — Suspicious Transaction Detected</h1>\r\n    <p>Real-Time Intelligence &bull; Microsoft Fabric</p>\r\n    <span class=\"alert-badge\">Immediate Action Required</span>\r\n  </div>\r\n\r\n  <div class=\"body-content\">\r\n    <!-- Transaction Details -->\r\n    <div class=\"section-title\">Transaction Details</div>\r\n    <table class=\"detail-table\">\r\n      <tr><td>Transaction ID</td><td><code>@{triggerBody()?['transaction_id']}</code></td></tr>\r\n      <tr><td>Amount</td><td><span class=\"amount-highlight\">$@{triggerBody()?['amount']}</span></td></tr>\r\n      <tr><td>Merchant</td><td>@{triggerBody()?['merchant_name']}</td></tr>\r\n      <tr><td>Category</td><td>@{triggerBody()?['merchant_category']}</td></tr>\r\n      <tr><td>Location</td><td>@{triggerBody()?['merchant_city']}, @{triggerBody()?['merchant_state']}</td></tr>\r\n      <tr><td>Timestamp</td><td>@{triggerBody()?['stream_timestamp']}</td></tr>\r\n      <tr><td>Fraud Type</td><td><span class=\"fraud-type-badge\">@{triggerBody()?['fraud_type']}</span></td></tr>\r\n    </table>\r\n\r\n    <!-- Cardholder Information -->\r\n    <div class=\"section-title\">Cardholder Information</div>\r\n    <table class=\"detail-table\">\r\n      <tr><td>Name</td><td>@{triggerBody()?['display_name']}</td></tr>\r\n      <tr><td>Email</td><td>@{triggerBody()?['email']}</td></tr>\r\n      <tr><td>User ID</td><td><code>@{triggerBody()?['user_id']}</code></td></tr>\r\n      <tr><td>Home Location</td><td>@{triggerBody()?['home_city']}, @{triggerBody()?['home_state']}</td></tr>\r\n      <tr><td>Credit Limit</td><td>$@{triggerBody()?['credit_limit']}</td></tr>\r\n    </table>\r\n\r\n    <!-- Risk Indicators -->\r\n    <div class=\"section-title\">Risk Indicators</div>\r\n    <div class=\"risk-indicators\">\r\n      <h4>Why this was flagged</h4>\r\n      <ul>\r\n        <li><strong>Distance from home:</strong> @{triggerBody()?['distance_from_home_km']} km</li>\r\n        <li><strong>Amount z-score:</strong> @{triggerBody()?['amount_zscore']} (standard deviations from mean)</li>\r\n        <li><strong>Transactions in last hour:</strong> @{triggerBody()?['txn_count_last_1h']}</li>\r\n        <li><strong>Transactions in last 24h:</strong> @{triggerBody()?['txn_count_last_24h']}</li>\r\n        <li><strong>Hour of day:</strong> @{triggerBody()?['hour_of_day']}:00</li>\r\n      </ul>\r\n    </div>\r\n\r\n    <!-- Recent Fraud History (last 10 fraudulent transactions) -->\r\n    <div class=\"section-title\">Recent Fraud History</div>\r\n    <p style=\"font-size:13px;color:#7f8c8d;margin:0 0 12px;\">\r\n      The following table shows the last 10 fraudulent transactions detected for this cardholder.\r\n    </p>\r\n    @{triggerBody()?['fraud_history_html']}\r\n\r\n    <!-- Call to Action — Investigate in App -->\r\n    <div class=\"cta-section\">\r\n      <a href=\"@{parameters('appUrl')}?user_id=@{triggerBody()?['user_id']}&txn_id=@{triggerBody()?['transaction_id']}\" class=\"cta-button\">\r\n        Review in Fraud Investigation App\r\n      </a>\r\n      <p class=\"cta-note\">Click the button above to review this case and take action.</p>\r\n    </div>\r\n  </div>\r\n\r\n  <!-- Footer -->\r\n  <div class=\"footer\">\r\n    This alert was generated automatically by <strong>Fabric Real-Time Intelligence</strong>\r\n    via Data Activator.<br/>\r\n    Sent to <strong>@{triggerBody()?['email']}</strong> &bull;\r\n    Fraud Operations team CC'd.<br/>\r\n    <a href=\"@{parameters('appUrl')}\">Open Fraud Investigation App</a>\r\n  </div>\r\n</div>\r\n</body>\r\n</html>"
+            },
+            "Send_Fraud_Alert_Email": {
+              "type": "ApiConnection",
+              "runAfter": {
+                "Compose_Email_Body": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['office365']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/v2/Mail",
+                "body": {
+                  "To": "@{triggerBody()?['email']}",
+                  "Cc": "@{parameters('alertRecipientEmail')}",
+                  "Subject": "FRAUD ALERT — $@{triggerBody()?['amount']} at @{triggerBody()?['merchant_name']} (@{triggerBody()?['display_name']})",
+                  "Body": "@{outputs('Compose_Email_Body')}",
+                  "IsHtml": true,
+                  "Importance": "High"
+                }
+              }
+            },
+            "Response_200": {
+              "type": "Response",
+              "runAfter": {
+                "Send_Fraud_Alert_Email": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "Alert email sent",
+                  "transaction_id": "@triggerBody()?['transaction_id']"
+                }
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "office365": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('office365ConnectionName'))]",
+                "connectionName": "[variables('office365ConnectionName')]",
+                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'office365')]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('office365ConnectionName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "logicAppName": {
+      "type": "string",
+      "value": "[variables('logicAppName')]"
+    },
+    "logicAppResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Logic/workflows', variables('logicAppName'))]"
+    },
+    "office365ConnectionName": {
+      "type": "string",
+      "value": "[variables('office365ConnectionName')]"
+    },
+    "logicAppTriggerId": {
+      "type": "string",
+      "value": "[format('{0}/triggers/When_Fabric_Activator_detects_fraud', resourceId('Microsoft.Logic/workflows', variables('logicAppName')))]"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:7071
+@token = 
+###
+
+# GET identity
+GET {{baseUrl}}/api/identity
+Content-Type: application/json
+X-MS-CLIENT-PRINCIPAL-NAME: Hugo G
+
+###
+
+# GET new session
+GET {{baseUrl}}/api/session/new
+Content-Type: application/json
+X-MS-TOKEN-AAD-ACCESS-TOKEN: {{token}}
+
+###
+
+# POST conversation - after calling session/new, update sessionId below
+POST {{baseUrl}}/api/conversation
+Content-Type: application/json
+X-MS-TOKEN-AAD-ACCESS-TOKEN: {{token}}
+X-MS-CLIENT-PRINCIPAL-NAME: Hugo G
+
+{
+  "prompt": "Hi",  
+  "sessionInfo": {
+    "sessionId": "ad1e006c-8e90-48e7-a405-41fd5da6dfb2",
+    "serviceSessionId": ""    
+  }
+}

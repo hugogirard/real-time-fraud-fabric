@@ -27,7 +27,7 @@
 
 # CELL ********************
 
-%pip install faker --quiet
+# %pip install faker --quiet
 
 # METADATA ********************
 

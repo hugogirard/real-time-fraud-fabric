@@ -5,58 +5,78 @@
     <!-- Chat Header -->
     <div id="chat-header" class="chat-header">
         <div class="chat-header-title">
-            <h2 id="chat-title">{{ session() ? session()!.title : 'Select a conversation' }}</h2>
-            <span id="chat-status-badge"></span>
+            <div class="chat-brand">
+                <div class="chat-brand-icon">
+                    <img src="images/shield.svg" alt="Bank icon" />
+                </div>
+                <span>Contoso Bank</span>
+            </div>
         </div>
         <div class="chat-header-actions">
-            <!-- Placeholder for future actions -->
+            <div class="chat-user-info">
+                <div class="chat-user-details">
+                    <span class="chat-user-name">{{username}}</span>
+                </div>
+                <div class="chat-user-avatar">{{initial}}</div>
+                <button class="chat-logout-btn" title="Sign out" (click)="logout()">
+                    <img src="images/logout-icon.svg" alt="Sign out icon" />
+                    <span>Sign out</span>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Messages -->
     <div id="chat-messages" class="chat-messages">
 
-        <!-- Welcome / empty state -->
-        @if (!session()) {
-        <div id="chat-welcome" class="chat-welcome">
-            <div class="chat-welcome-icon">
-                <img src="images/shield-welcome.svg" alt="Shield icon" />
-            </div>
-            <h3>Fraud Alert Assistant</h3>
-            <p>Select an existing conversation from the sidebar or start a new one to get help with a fraud
-                alert on your account.</p>
-        </div>
-        }
-
         <!-- Message list -->
-        @if (session()) {
         <div id="message-list">
-            @for (msg of messages(); track msg.id) {
-            <div class="message" [class.bot]="msg.role === Role.Assistant" [class.user]="msg.role === Role.User">
-                <div class="message-avatar">{{ msg.role === Role.Assistant ? 'CB' : 'JD' }}</div>
+            @for (msg of messageStore.messages(); track $index) {
+            <div class="message" [class.bot]="msg.role === 'assistant'" [class.user]="msg.role === 'user'">
+                <div class="message-avatar">{{ msg.role === 'assistant' ? 'CB' : initial }}</div>
                 <div class="message-content">
-                    <div class="message-bubble">{{ msg.text }}</div>
-                    <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
+                    <div class="message-bubble" [class.message-error]="msg.isError">
+                        @if (msg.role === 'assistant') {
+                        <remark [markdown]="msg.content"></remark>
+                        } @else {
+                        {{ msg.content }}
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+
+            @if (messageStore.isStreaming() && messageStore.streamingContent()) {
+            <div class="message bot">
+                <div class="message-avatar">CB</div>
+                <div class="message-content">
+                    <div class="message-bubble" [class.message-error]="messageStore.isStreamingError()">
+                        <remark [markdown]="messageStore.streamingContent()"></remark>
+                    </div>
                 </div>
             </div>
             }
         </div>
-        }
 
         <!-- Typing indicator -->
-        <div id="typing-indicator" class="typing-indicator">
+        @if (isTyping() || (messageStore.isStreaming() && !messageStore.streamingContent())) {
+        <div id="typing-indicator" class="typing-indicator visible">
             <span class="typing-dot"></span>
             <span class="typing-dot"></span>
             <span class="typing-dot"></span>
         </div>
+        }
     </div>
 
     <!-- Chat Input -->
     <div id="chat-input-area" class="chat-input-area">
         <div class="chat-input-wrapper">
-            <textarea id="chat-input" class="chat-input" rows="1" placeholder="Type your message…"
-                aria-label="Type your message"></textarea>
-            <button id="send-btn" class="chat-send-btn" title="Send message" disabled>
+            <button class="chat-new-btn" [disabled]="messageStore.isStreaming()" data-tooltip="New chat"
+                title="New chat" (click)="onNewChat()">+</button>
+            <input id="chat-input" class="chat-input" rows="1" placeholder="Type your message…" [value]="userMessage()"
+                [disabled]="messageStore.isStreaming()" (input)="userMessage.set($any($event.target).value)"
+                (keydown.enter)="onSend()" aria-label="Type your message" />
+            <button id="send-btn" class="chat-send-btn" title="Send message" (click)="onSend()">
                 <img src="images/send-icon.svg" alt="Send" />
             </button>
         </div>
