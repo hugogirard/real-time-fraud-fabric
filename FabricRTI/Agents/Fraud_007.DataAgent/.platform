@@ -1,12 +1,11 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
-    "type": "Notebook",
-    "displayName": "Generate_Credit_Card_Transactions",
-    "description": "New notebook"
+    "type": "DataAgent",
+    "displayName": "Fraud_007"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "6a72a53f-443c-9bb7-4d40-d150359cf687"
+    "logicalId": "ca6c8324-5e7a-b5d7-4887-4f79477838b5"
   }
 }

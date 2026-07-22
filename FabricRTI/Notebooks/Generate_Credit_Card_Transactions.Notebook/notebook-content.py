@@ -20,7 +20,7 @@
 # - **Derived Features** — Distance from home, rolling averages, velocity features, and more
 # 
 # **Input required:**
-# - A **Customers table** in a Fabric Eventhouse (KQL database) containing user profiles with demographics, home location, and Entra ID identities (populated by `Generate_Customers`).
+# - A **Customers table** in a Fabric Eventhouse (KQL database) containing user profiles with demographics, home location, and Entra ID identities (populated by `Generate_Customers.ipynb`)
 # 
 # **Fraud patterns injected:**
 # - Unusually high transaction amounts
@@ -36,11 +36,15 @@
 
 # ## 1. Install and Import Required Libraries
 # 
-# Install `Faker`, the Kusto SDKs, and the Event Hub SDK, then import all required packages.
+# Install the `Faker`, `azure-kusto-data` and `azure-kusto-ingest` libraries, then import all required packages.
 
 # CELL ********************
 
-%pip install faker azure-kusto-data azure-eventhub --quiet
+%pip install --upgrade pip
+%pip install faker --quiet
+%pip install azure-kusto-data --quiet
+%pip install azure-kusto-ingest --quiet
+%pip install azure-eventhub --quiet
 
 # METADATA ********************
 
@@ -84,27 +88,26 @@ print("Libraries imported successfully.")
 # CELL ********************
 
 # ── Configuration ──────────────────────────────────────────
-START_DATE = datetime(2025, 1, 1)       # Transaction window start
-END_DATE = datetime(2025, 6, 30)        # Transaction window end
+START_DATE = datetime(2026, 1, 1)       # Transaction window start
+END_DATE = datetime(2026, 4, 15)        # Transaction window end
 FRAUD_RATIO = 0.04                      # Target ~4% fraud rate
-AVG_TXN_PER_USER_PER_DAY = 2            # Average daily transactions per user
+AVG_TXN_PER_USER_PER_DAY = 10            # Average daily transactions per user
 RANDOM_SEED = 42
 
 # ── Eventhouse KQL Database Configuration ─────────────────
-# Replace with your Eventhouse Query URI and KQL database name.
-# Query URI is on the Eventhouse "Database details" pane in Fabric.
-EVENTHOUSE_URI = "https://<your-eventhouse>.kusto.fabric.microsoft.com"  # Eventhouse Query URI
-KQL_DATABASE = "MyFraud_EH"                                              # KQL database name
+# Replace with your Eventhouse Query URI and KQL database name
+EVENTHOUSE_URI = "https://trd-7zrfeffcyzsvvtxbn2.z8.kusto.fabric.microsoft.com"  # Eventhouse Query URI
+KQL_DATABASE = "MyFraud_EH"                                     # KQL database name
 CUSTOMERS_TABLE = "Customers"                                            # Table name in the Eventhouse
 
 # Derived
 TOTAL_DAYS = (END_DATE - START_DATE).days
 
-print(f"Eventhouse URI:  {EVENTHOUSE_URI}")
-print(f"KQL Database:    {KQL_DATABASE}")
+print(f"Eventhouse URI: {EVENTHOUSE_URI}")
+print(f"KQL Database:   {KQL_DATABASE}")
 print(f"Customers Table: {CUSTOMERS_TABLE}")
-print(f"Date range:      {START_DATE.date()} → {END_DATE.date()} ({TOTAL_DAYS} days)")
-print(f"Fraud ratio:     {FRAUD_RATIO:.0%}")
+print(f"Date range: {START_DATE.date()} → {END_DATE.date()} ({TOTAL_DAYS} days)")
+print(f"Fraud ratio: {FRAUD_RATIO:.0%}")
 
 # METADATA ********************
 
@@ -117,7 +120,7 @@ print(f"Fraud ratio:     {FRAUD_RATIO:.0%}")
 
 # ## 3. Load Customer Profiles from Eventhouse
 # 
-# Query the **Customers** table in the Eventhouse KQL database. The table must contain columns such as `user_id`, `first_name`, `last_name`, `email`, `home_lat`, `home_lon`, `credit_limit`, etc. Run the `Generate_Customers` notebook first if the table is empty.
+# Query the **Customers** table in the Eventhouse KQL database. The table must contain columns such as `user_id`, `first_name`, `last_name`, `email`, `home_lat`, `home_lon`, `credit_limit`, etc.
 
 # CELL ********************
 
@@ -462,7 +465,7 @@ all_transactions = []
 
 for _, user in users_df.iterrows():
     user_dict = user.to_dict()
-
+    
     # Determine number of fraud transactions for this user
     user_total_normal = int(np.random.poisson(AVG_TXN_PER_USER_PER_DAY * TOTAL_DAYS))
     user_total_fraud = max(1, int(user_total_normal * FRAUD_RATIO))
@@ -480,7 +483,7 @@ for _, user in users_df.iterrows():
         fraud_type = random.choice(FRAUD_TYPES)
         txn = generate_fraud_transaction(user_dict, fraud_date, fraud_type)
         all_transactions.append(txn)
-
+        
         # For rapid_fire fraud, add 2-4 extra quick transactions
         if fraud_type == "rapid_fire":
             for _ in range(random.randint(2, 4)):
@@ -544,8 +547,6 @@ txn_df.head(10)
 # - **rolling_avg_amount** — User's rolling 7-day average transaction amount
 # - **txn_count_last_1h / txn_count_last_24h** — Velocity features
 # - **amount_deviation** — How far this amount deviates from the user's mean
-# 
-# We also merge `email` and `display_name` from the Customers table into each event so the Activator rule can address the right cardholder.
 
 # CELL ********************
 
@@ -620,7 +621,7 @@ txn_df["txn_count_last_24h"] = txn_df.groupby("user_id", group_keys=False).apply
 # Drop helper columns
 txn_df = txn_df.drop(columns=["home_lat", "home_lon"])
 
-print(f"Added derived features. Final shape: {txn_df.shape}")
+print(f"Added {6} derived features. Final shape: {txn_df.shape}")
 print(f"\nAll columns: {list(txn_df.columns)}")
 
 # METADATA ********************
@@ -632,7 +633,96 @@ print(f"\nAll columns: {list(txn_df.columns)}")
 
 # MARKDOWN ********************
 
-# ## 10. Verify Customers Table in Eventhouse
+# ## 10. Explore Transaction Data Distribution
+# 
+# Visualize fraud vs. legitimate transaction patterns by amount, category, time, and distance from home.
+
+# CELL ********************
+
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams["figure.figsize"] = (14, 4)
+matplotlib.rcParams["figure.dpi"] = 100
+
+fig, axes = plt.subplots(1, 4, figsize=(20, 4))
+
+# 1. Amount distribution by fraud label
+for label, color, name in [(0, "#2ecc71", "Legitimate"), (1, "#e74c3c", "Fraud")]:
+    subset = txn_df[txn_df["is_fraud"] == label]["amount"]
+    axes[0].hist(subset.clip(upper=2000), bins=50, alpha=0.6, color=color, label=name)
+axes[0].set_title("Transaction Amount Distribution")
+axes[0].set_xlabel("Amount ($)")
+axes[0].legend()
+
+# 2. Fraud count by category
+fraud_by_cat = txn_df[txn_df["is_fraud"] == 1].groupby("merchant_category").size().sort_values()
+fraud_by_cat.plot.barh(ax=axes[1], color="#e74c3c", alpha=0.8)
+axes[1].set_title("Fraud Count by Merchant Category")
+axes[1].set_xlabel("Fraud Transactions")
+
+# 3. Transactions by hour of day
+for label, color, name in [(0, "#2ecc71", "Legitimate"), (1, "#e74c3c", "Fraud")]:
+    subset = txn_df[txn_df["is_fraud"] == label]
+    hourly = subset.groupby("hour_of_day").size()
+    axes[2].plot(hourly.index, hourly.values, color=color, label=name, marker="o", markersize=3)
+axes[2].set_title("Transactions by Hour of Day")
+axes[2].set_xlabel("Hour")
+axes[2].legend()
+
+# 4. Distance from home
+for label, color, name in [(0, "#2ecc71", "Legitimate"), (1, "#e74c3c", "Fraud")]:
+    subset = txn_df[txn_df["is_fraud"] == label]["distance_from_home_km"]
+    axes[3].hist(subset.clip(upper=5000), bins=50, alpha=0.6, color=color, label=name)
+axes[3].set_title("Distance from Home (km)")
+axes[3].set_xlabel("Distance (km)")
+axes[3].legend()
+
+plt.tight_layout()
+plt.show()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# Summary statistics
+print("=" * 60)
+print("FRAUD TYPE BREAKDOWN")
+print("=" * 60)
+print(txn_df[txn_df["is_fraud"] == 1]["fraud_type"].value_counts().to_string())
+
+print("\n" + "=" * 60)
+print("AMOUNT STATISTICS BY FRAUD LABEL")
+print("=" * 60)
+print(txn_df.groupby("is_fraud")["amount"].describe().round(2).to_string())
+
+print("\n" + "=" * 60)
+print("DISTANCE FROM HOME (KM) BY FRAUD LABEL")
+print("=" * 60)
+print(txn_df.groupby("is_fraud")["distance_from_home_km"].describe().round(2).to_string())
+
+print("\n" + "=" * 60)
+print("SAMPLE FRAUDULENT TRANSACTIONS")
+print("=" * 60)
+txn_df[txn_df["is_fraud"] == 1].sample(10, random_state=42)[
+    ["user_id", "timestamp", "amount", "merchant_name", "merchant_category",
+     "merchant_city", "fraud_type", "distance_from_home_km"]
+]
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ## 11. Verify Customers Table in Eventhouse
 # 
 # Validate that the **Customers** table used in Section 3 is accessible and contains the expected data. This step reuses the Kusto client established earlier.
 
@@ -644,7 +734,7 @@ count_table = dataframe_from_result_table(result.primary_results[0])
 print(f"✅ {CUSTOMERS_TABLE} table in {KQL_DATABASE} has {count_table.iloc[0, 0]} rows.")
 print(f"\n💡 Customers were loaded from this table in Section 3.")
 print(f"   Transactions can be joined with customers in KQL:")
-print(f"   CCTransactions | join kind=inner {CUSTOMERS_TABLE} on user_id")
+print(f"   Transactions | join kind=inner {CUSTOMERS_TABLE} on user_id")
 
 # METADATA ********************
 
@@ -655,21 +745,26 @@ print(f"   CCTransactions | join kind=inner {CUSTOMERS_TABLE} on user_id")
 
 # MARKDOWN ********************
 
-# ## 11. Stream Transactions to Fabric Eventstream (Real-Time Intelligence)
+# ## 12. Stream Transactions to Fabric Eventstream (Real-Time Intelligence)
 # 
 # Send all generated transactions as a **live 30-minute stream** to a Fabric **Eventstream** via its Event Hub–compatible Custom App endpoint. This simulates real-time card activity for dashboards, KQL queries, and alerting.
 # 
 # ### How to set up the Eventstream
 # 
-# 1. Open `CreditCardTransactions_es` in the workspace (synced from this Git repo).
-# 2. Switch the canvas to **Edit mode**, then click the **CreditCardTransactions** source node.
-# 3. On the right pane, select the **Keys** tab and copy the **Connection string–primary key**.
-# 4. Store the connection string as a secret in Azure Key Vault (e.g., `EventHubConnectionString`).
-# 5. Update `KEY_VAULT_URL` and `SECRET_NAME` below.
+# 1. **Create an Eventstream** — In your Fabric workspace, click **+ New item → Eventstream**. Give it a name (e.g., `es-credit-card-transactions`).
+# 2. **Add a Custom App source** — In the Eventstream canvas, click **New source → Custom App**. Name it (e.g., `credit-card-generator`). Click **Add**.
+# 3. **Store the connection string in Azure Key Vault** — Once the Custom App source is created, click on it and select the **Keys** tab. Copy the **Connection string–primary key** and store it as a secret in your Azure Key Vault (e.g., secret name `EventHubConnectionString`).
+# 4. **Update the Key Vault URL and secret name below** — Replace `KEY_VAULT_URL` and `SECRET_NAME` in the next cell with your Key Vault URI and secret name.
+# 5. **Add a destination** — In the Eventstream canvas, add a destination:
+#    - **KQL Database** → to route events into an Eventhouse table for KQL queries
+#    - **Lakehouse** → to persist events as Delta tables
+#    - **Reflex** → to trigger real-time alerts on fraud patterns
+# 6. **Run the cells below** — The generator will compress 6 months of transactions into 30 minutes of real-time streaming, sending events at their proportional pace with progress updates.
 # 
-# > **Note:** The Event Hub name (`EntityPath`) is already embedded in the connection string — you do not need to set it separately.
+# > **Note:** The Event Hub name (`EntityPath`) is already embedded in the connection string — you do **not** need to set it separately.
 # 
 # > **Security:** The connection string is retrieved at runtime from Azure Key Vault using `notebookutils.credentials.getSecret`, so no secrets are stored in the notebook.
+
 
 # CELL ********************
 
@@ -679,8 +774,8 @@ from datetime import datetime, timedelta, timezone
 from azure.eventhub import EventHubProducerClient, EventData
 
 # ── Azure Key Vault Configuration ─────────────────────────
-# Replace with your Key Vault URL and the secret name storing the connection string.
-KEY_VAULT_URL = "https://<your-keyvault-name>.vault.azure.net/"
+# Replace with your Key Vault URL and the secret name storing the connection string
+KEY_VAULT_URL = "https://DemoKVNSO.vault.azure.net/"
 SECRET_NAME = "EventHubConnectionString"
 
 # Retrieve the Event Hub connection string from Azure Key Vault

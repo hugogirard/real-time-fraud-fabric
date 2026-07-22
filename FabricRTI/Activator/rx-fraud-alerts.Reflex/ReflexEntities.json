@@ -1,0 +1,234 @@
+[
+  {
+    "uniqueIdentifier": "bd52f055-3a66-4777-986f-ebc551944e42",
+    "payload": {
+      "name": "EventStream",
+      "metadata": {
+        "eventstreamArtifactId": "a862593b-9464-4c30-acb1-450c636d445f"
+      }
+    },
+    "type": "eventstreamSource-v1"
+  },
+  {
+    "uniqueIdentifier": "03b8a979-2316-4285-8986-5fb2ed5521bf",
+    "payload": {
+      "name": "CreditCardTransactions_es-stream",
+      "definition": {
+        "type": "Event",
+        "instance": "{\"templateId\":\"SourceEvent\",\"templateVersion\":\"1.1\",\"steps\":[{\"name\":\"SourceEventStep\",\"id\":\"df161738-d868-40d7-b28f-2dea40c69185\",\"rows\":[{\"name\":\"SourceSelector\",\"kind\":\"SourceReference\",\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"bd52f055-3a66-4777-986f-ebc551944e42\"}]}]}]}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4",
+    "payload": {
+      "name": "Cardholder",
+      "definition": {
+        "type": "Object"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "821823f5-6d20-443c-beef-1dbf1e738f15",
+    "payload": {
+      "name": "user_id",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"fddb3aa3-93ea-4f61-a7c9-36a48ad9800e\",\"name\":\"IdPartStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"IdentityPartAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "00d2713c-ab3c-44b8-9fad-8c18af4abdb8",
+    "payload": {
+      "name": "user_id",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"db9fdeba-5ca3-4be3-a51a-e95d8e0f608c\",\"name\":\"IdStructureStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"821823f5-6d20-443c-beef-1dbf1e738f15\"}],\"kind\":\"AttributeReference\",\"name\":\"idPart\",\"type\":\"complex\"}],\"kind\":\"IdPart\",\"name\":\"IdPart\"}]}],\"templateId\":\"IdentityTupleAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "a4da428e-6d67-423d-87b6-2f46f333e6ba",
+    "payload": {
+      "name": "CreditCardTransactions_es-stream",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Event",
+        "instance": "{\"steps\":[{\"id\":\"46505f47-480f-43c1-a476-b7ebe765113e\",\"name\":\"SplitEventStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"03b8a979-2316-4285-8986-5fb2ed5521bf\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"user_id\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"821823f5-6d20-443c-beef-1dbf1e738f15\"}],\"kind\":\"AttributeReference\",\"name\":\"idPart\",\"type\":\"complex\"}],\"kind\":\"FieldIdMapping\",\"name\":\"FieldIdMapping\"},{\"arguments\":[{\"name\":\"isAuthoritative\",\"type\":\"boolean\",\"value\":true}],\"kind\":\"EventOptions\",\"name\":\"SplitEventOptions\"}]}],\"templateId\":\"SplitEvent\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "298f5039-4e83-4fbd-af24-b48845ec7216",
+    "payload": {
+      "name": "amount",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"d08c6e1b-2ade-455c-9bb8-c12f8a00f418\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"amount\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"286b182a-cce2-4751-8fb3-608f97791af3\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Number\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "d168550c-d915-42eb-a9d8-8ec79398e7a3",
+    "payload": {
+      "name": "email",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"c309ae90-4ce5-4571-9060-a7609f08aa15\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"email\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"d89b85a5-522c-46a8-a12c-7d7674311376\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "371c2bbf-5973-4bc3-b6d8-ed201b26b230",
+    "payload": {
+      "name": "fraud_type",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"d629b116-612d-4183-8025-f42bc0e71727\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"fraud_type\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"4d7f6d97-5e30-4580-be21-a5f61a46d84e\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "f93e39bf-2184-4c10-8cf3-c8323aa0bc4d",
+    "payload": {
+      "name": "is_fraud",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"09648d61-879f-47a8-8ef6-80c71a9f983c\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"is_fraud\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"3481dd3e-2baf-4912-ad6e-30a3c6c7c51f\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Number\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "a8f6d07f-f8f4-4855-ad52-404f325f79e1",
+    "payload": {
+      "name": "display_name",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"35245267-5056-4a8d-8118-59d9edb57886\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"display_name\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"542f5e3d-21d7-4a96-807d-6ca0b877a6ec\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "13d24428-5b60-4a02-a7ee-e50ee74dd350",
+    "payload": {
+      "name": "merchant_city",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"b1e73c01-9e0f-4e9b-b6f3-a4dee5c5ae0a\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"merchant_city\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"a52b5b14-66f2-492a-be16-624cdc7f0ffc\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "fa116d04-24dd-489c-9a92-d5e5485f3070",
+    "payload": {
+      "name": "merchant_name",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"d41c46d9-d534-4246-a090-00c19b1e60c0\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"merchant_name\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"a9ff3067-45f4-4535-9923-962db0d465ef\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "44f9909e-5ac3-45f1-b652-10ab92293bd2",
+    "payload": {
+      "name": "merchant_state",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"99d79587-b235-492a-b35b-84a464ba5ef5\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"merchant_state\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"de7dca90-20b0-49c5-87b8-ed26b118396f\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "0b75595a-63e6-4ec1-b966-f9cc7a0ff49b",
+    "payload": {
+      "name": "stream_timestamp",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"fc350ed4-faf6-42b5-ac88-14a9fb35874d\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"stream_timestamp\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"0f364ec8-2774-4e8e-9746-cead99830e36\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "30439e2c-561c-4d0a-aeeb-a0797bfa5698",
+    "payload": {
+      "name": "transaction_id",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Attribute",
+        "instance": "{\"steps\":[{\"id\":\"e16f42bc-42b7-4c5f-9315-d48f62044b78\",\"name\":\"EventSelectStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"},{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"transaction_id\"}],\"kind\":\"EventField\",\"name\":\"EventFieldSelector\"}]},{\"id\":\"6c17c093-02ff-4a19-9a7e-cefd7af69e6f\",\"name\":\"EventComputeStep\",\"rows\":[{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"Text\"},{\"name\":\"format\",\"type\":\"string\",\"value\":\"\"}],\"kind\":\"TypeAssertion\",\"name\":\"TypeAssertion\"}]}],\"templateId\":\"BasicEventAttribute\",\"templateVersion\":\"1.2.5\"}"
+      }
+    },
+    "type": "timeSeriesView-v1"
+  },
+  {
+    "uniqueIdentifier": "7974d1a3-4511-4267-b1d4-6b1d5a72e86d",
+    "payload": {
+      "name": "CreditCardTransactions_es-stream alert",
+      "parentObject": {
+        "targetUniqueIdentifier": "73c88620-9b79-4c64-b778-42be93dc5dd4"
+      },
+      "definition": {
+        "type": "Rule",
+        "instance": "{\"steps\":[{\"id\":\"14dd0b48-d5bc-4505-b0cb-72998c950723\",\"name\":\"FieldsDefaultsStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a4da428e-6d67-423d-87b6-2f46f333e6ba\"}],\"kind\":\"EventReference\",\"name\":\"event\",\"type\":\"complex\"}],\"kind\":\"Event\",\"name\":\"EventSelector\"}]},{\"id\":\"324ed714-db8f-4ffa-94da-5969c8838c30\",\"name\":\"EventDetectStep\",\"rows\":[{\"arguments\":[],\"kind\":\"OnEveryValue\",\"name\":\"OnEveryValue\"}]},{\"id\":\"7d4ef858-e761-4634-a5c6-9f00cfb9efb3\",\"name\":\"DimensionalFilterStep\",\"rows\":[{\"arguments\":[{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"f93e39bf-2184-4c10-8cf3-c8323aa0bc4d\"}],\"kind\":\"AttributeReference\",\"name\":\"attribute\",\"type\":\"complex\"}],\"kind\":\"Attribute\",\"name\":\"AttributeSelector\"},{\"arguments\":[{\"name\":\"op\",\"type\":\"string\",\"value\":\"IsEqualTo\"},{\"name\":\"threshold\",\"type\":\"number\",\"value\":1}],\"kind\":\"NumberValueCondition\",\"name\":\"NumberValueCondition\"}]},{\"id\":\"9a1c7940-6797-40f4-900f-904f440e276b\",\"name\":\"ActStep\",\"rows\":[{\"arguments\":[{\"name\":\"messageLocale\",\"type\":\"string\",\"value\":\"en-us\"},{\"name\":\"sentTo\",\"type\":\"array\",\"values\":[{\"arguments\":[{\"name\":\"fieldName\",\"type\":\"string\",\"value\":\"email\"}],\"kind\":\"EventFieldReference\",\"type\":\"complex\"}]},{\"name\":\"copyTo\",\"type\":\"array\",\"values\":[]},{\"name\":\"bCCTo\",\"type\":\"array\",\"values\":[]},{\"name\":\"subject\",\"type\":\"array\",\"values\":[{\"name\":\"string\",\"type\":\"string\",\"value\":\"Fraud Alert — Suspicious transaction of $\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"298f5039-4e83-4fbd-af24-b48845ec7216\"}],\"kind\":\"AttributeReference\",\"type\":\"complex\"},{\"name\":\"string\",\"type\":\"string\",\"value\":\"  at \"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"fa116d04-24dd-489c-9a92-d5e5485f3070\"}],\"kind\":\"AttributeReference\",\"type\":\"complex\"},{\"name\":\"string\",\"type\":\"string\",\"value\":\" \"}]},{\"name\":\"headline\",\"type\":\"array\",\"values\":[{\"name\":\"string\",\"type\":\"string\",\"value\":\"Fraudulent transaction detected on your card\"}]},{\"name\":\"optionalMessage\",\"type\":\"array\",\"values\":[{\"name\":\"string\",\"type\":\"string\",\"value\":\"Hi \"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"a8f6d07f-f8f4-4855-ad52-404f325f79e1\"}],\"kind\":\"AttributeReference\",\"type\":\"complex\"},{\"name\":\"string\",\"type\":\"string\",\"value\":\",\\nA potentially fraudulent transaction was detected on your card. See details below.\\nIf you did not authorize this transaction, please contact your bank immediately.\\nThank you, \\nThe Fraud Squad by SE\"}]},{\"name\":\"additionalInformation\",\"type\":\"array\",\"values\":[{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"amount\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"298f5039-4e83-4fbd-af24-b48845ec7216\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"},{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"fraud_type\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"371c2bbf-5973-4bc3-b6d8-ed201b26b230\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"},{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"merchant_city\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"13d24428-5b60-4a02-a7ee-e50ee74dd350\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"},{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"merchant_name\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"fa116d04-24dd-489c-9a92-d5e5485f3070\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"},{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"merchant_state\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"44f9909e-5ac3-45f1-b652-10ab92293bd2\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"},{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"stream_timestamp\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"0b75595a-63e6-4ec1-b966-f9cc7a0ff49b\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"},{\"arguments\":[{\"name\":\"name\",\"type\":\"string\",\"value\":\"transaction_id\"},{\"arguments\":[{\"name\":\"entityId\",\"type\":\"string\",\"value\":\"30439e2c-561c-4d0a-aeeb-a0797bfa5698\"}],\"kind\":\"AttributeReference\",\"name\":\"reference\",\"type\":\"complexReference\"}],\"kind\":\"NameReferencePair\",\"type\":\"complex\"}]}],\"kind\":\"EmailMessage\",\"name\":\"EmailBinding\"}]}],\"templateId\":\"EventTrigger\",\"templateVersion\":\"1.2.5\"}",
+        "settings": {
+          "shouldRun": true,
+          "shouldApplyRuleOnUpdate": true,
+          "delayToleranceMs": 120000
+        }
+      }
+    },
+    "type": "timeSeriesView-v1"
+  }
+]

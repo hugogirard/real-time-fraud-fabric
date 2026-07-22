@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "KQLDashboard",
+    "displayName": "RT_Dashboard_Frauds",
+    "description": "RT_Dashboard_Frauds"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "203b3ca6-3193-b71e-438f-9362bdc43fbd"
+  }
+}

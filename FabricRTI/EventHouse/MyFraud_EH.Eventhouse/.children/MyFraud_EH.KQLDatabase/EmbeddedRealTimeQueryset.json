@@ -1,0 +1,28 @@
+{
+  "queryset": {
+    "version": "1.0.0",
+    "dataSources": [
+      {
+        "id": "0e04f57c-2dc0-4dc3-9143-7154654cb4e7",
+        "clusterUri": "https://trd-7zrfeffcyzsvvtxbn2.z8.kusto.fabric.microsoft.com",
+        "type": "Fabric",
+        "databaseItemId": "4b4b5c3d-3a07-4c02-a5c7-a6cc0447d5c0",
+        "databaseItemName": "MyFraud_EH"
+      }
+    ],
+    "tabs": [
+      {
+        "id": "226d73f8-e24e-43cd-b781-60554613681e",
+        "content": "let currentUser = \"stephanie.miller@MngEnvMCAP530541.onmicrosoft.com\";\nCCTransactions\n| join kind=inner (Customers | project user_id, user_principal_name) on user_id\n| where user_principal_name == currentUser\n| order by stream_timestamp desc\n| take 10",
+        "title": "Eventhouse_prep",
+        "dataSourceId": "0e04f57c-2dc0-4dc3-9143-7154654cb4e7"
+      },
+      {
+        "id": "204f4ae1-a198-44d2-a781-57b7ec67d362",
+        "content": "// Use 'take' to view a sample number of records in the table and check the data.\nCustomers\n| take 100\n",
+        "title": "",
+        "dataSourceId": "0e04f57c-2dc0-4dc3-9143-7154654cb4e7"
+      }
+    ]
+  }
+}

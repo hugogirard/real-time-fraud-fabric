@@ -1,0 +1,424 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/dataAgent/definition/dataSource/1.0.0/schema.json",
+  "artifactId": "0447d5c0-a6cc-a5c7-4c02-3a074b4b5c3d",
+  "workspaceId": "00000000-0000-0000-0000-000000000000",
+  "dataSourceInstructions": null,
+  "displayName": "MyFraud_EH",
+  "type": "kusto",
+  "userDescription": "When a question is asked, find the right firstname and lastname to discuss with the requestor (based on his Entra ID login matched with the email address in the Customers table.\r\nWhen you look at fraud transactions filter them by using the is_fraud column to 1",
+  "metadata": {},
+  "elements": [
+    {
+      "id": "8c060742-3ded-4d14-b438-4efa7b0da55d",
+      "is_selected": false,
+      "display_name": "Functions",
+      "type": "function_grouping",
+      "description": null,
+      "children": []
+    },
+    {
+      "id": "0529487a-c5ae-4dab-ac1f-f1cbc6f9cb56",
+      "is_selected": false,
+      "display_name": "Materialized Views",
+      "type": "materialized_view_grouping",
+      "description": null,
+      "children": []
+    },
+    {
+      "id": "23744cf3-df3e-41b8-934c-cc9c11bcca95",
+      "is_selected": false,
+      "display_name": "Tables",
+      "type": "table_grouping",
+      "description": null,
+      "children": [
+        {
+          "id": "55c7082f-2238-4a5f-bd33-6ce67c012b14",
+          "is_selected": true,
+          "display_name": "CCTransactions",
+          "type": "kusto.table",
+          "description": null,
+          "children": [
+            {
+              "id": "amount",
+              "is_selected": true,
+              "display_name": "amount",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "amount_zscore",
+              "is_selected": true,
+              "display_name": "amount_zscore",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "day_of_week",
+              "is_selected": true,
+              "display_name": "day_of_week",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "distance_from_home_km",
+              "is_selected": true,
+              "display_name": "distance_from_home_km",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "EventEnqueuedUtcTime",
+              "is_selected": true,
+              "display_name": "EventEnqueuedUtcTime",
+              "type": "kusto.column",
+              "data_type": "System.DateTime",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "EventProcessedUtcTime",
+              "is_selected": true,
+              "display_name": "EventProcessedUtcTime",
+              "type": "kusto.column",
+              "data_type": "System.DateTime",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "fraud_type",
+              "is_selected": true,
+              "display_name": "fraud_type",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "hour_of_day",
+              "is_selected": true,
+              "display_name": "hour_of_day",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "is_fraud",
+              "is_selected": true,
+              "display_name": "is_fraud",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "merchant_category",
+              "is_selected": true,
+              "display_name": "merchant_category",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "merchant_city",
+              "is_selected": true,
+              "display_name": "merchant_city",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "merchant_lat",
+              "is_selected": true,
+              "display_name": "merchant_lat",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "merchant_lon",
+              "is_selected": true,
+              "display_name": "merchant_lon",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "merchant_name",
+              "is_selected": true,
+              "display_name": "merchant_name",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "merchant_state",
+              "is_selected": true,
+              "display_name": "merchant_state",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "PartitionId",
+              "is_selected": true,
+              "display_name": "PartitionId",
+              "type": "kusto.column",
+              "data_type": "System.Int64",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "rolling_avg_amount",
+              "is_selected": true,
+              "display_name": "rolling_avg_amount",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "stream_timestamp",
+              "is_selected": true,
+              "display_name": "stream_timestamp",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "time_since_last_txn_sec",
+              "is_selected": true,
+              "display_name": "time_since_last_txn_sec",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "transaction_id",
+              "is_selected": true,
+              "display_name": "transaction_id",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "txn_count_last_1h",
+              "is_selected": true,
+              "display_name": "txn_count_last_1h",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "txn_count_last_24h",
+              "is_selected": true,
+              "display_name": "txn_count_last_24h",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "user_id",
+              "is_selected": true,
+              "display_name": "user_id",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "f69dede7-e4b5-4364-906a-e079d0d0b2f8",
+          "is_selected": true,
+          "display_name": "Customers",
+          "type": "kusto.table",
+          "description": null,
+          "children": [
+            {
+              "id": "account_created",
+              "is_selected": true,
+              "display_name": "account_created",
+              "type": "kusto.column",
+              "data_type": "System.DateTime",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "age",
+              "is_selected": true,
+              "display_name": "age",
+              "type": "kusto.column",
+              "data_type": "System.Int32",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "country",
+              "is_selected": true,
+              "display_name": "country",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "country_code",
+              "is_selected": true,
+              "display_name": "country_code",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "credit_limit",
+              "is_selected": true,
+              "display_name": "credit_limit",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "display_name",
+              "is_selected": true,
+              "display_name": "display_name",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "email",
+              "is_selected": true,
+              "display_name": "email",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "first_name",
+              "is_selected": true,
+              "display_name": "first_name",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "gender",
+              "is_selected": true,
+              "display_name": "gender",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "home_city",
+              "is_selected": true,
+              "display_name": "home_city",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "home_lat",
+              "is_selected": true,
+              "display_name": "home_lat",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "home_lon",
+              "is_selected": true,
+              "display_name": "home_lon",
+              "type": "kusto.column",
+              "data_type": "System.Double",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "home_state",
+              "is_selected": true,
+              "display_name": "home_state",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "last_name",
+              "is_selected": true,
+              "display_name": "last_name",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "postal_code",
+              "is_selected": true,
+              "display_name": "postal_code",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "street_address",
+              "is_selected": true,
+              "display_name": "street_address",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "user_id",
+              "is_selected": true,
+              "display_name": "user_id",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            },
+            {
+              "id": "user_principal_name",
+              "is_selected": true,
+              "display_name": "user_principal_name",
+              "type": "kusto.column",
+              "data_type": "System.String",
+              "description": null,
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
