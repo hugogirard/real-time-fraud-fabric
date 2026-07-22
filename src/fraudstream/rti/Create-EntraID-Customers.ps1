@@ -16,30 +16,42 @@
     first_name, last_name, email (and optionally home_city, home_state, country_code).
     Defaults to the latest "customers_*.csv" in the script directory, or "customers.csv".
 
-.PARAMETER DefaultPassword
-    The initial password for all created users. Users will be prompted to change it on first sign-in.
+.PARAMETER CsvPath
+    Path to a CSV file containing customer data. The CSV must have these columns:
+    first_name, last_name, email (and optionally home_city, home_state, country_code).
+    Defaults to the latest "customers_*.csv" in the script directory, or "customers.csv".
 
 .EXAMPLE
-    .\Create-EntraID-Customers.ps1 -DefaultPassword (ConvertTo-SecureString "P@ssw0rd!234" -AsPlainText -Force)
+    .\Create-EntraID-Customers.ps1
 
 .EXAMPLE
-    .\Create-EntraID-Customers.ps1 -CsvPath "C:\data\customers.csv" -DefaultPassword (ConvertTo-SecureString "P@ssw0rd!234" -AsPlainText -Force)
+    .\Create-EntraID-Customers.ps1 -CsvPath "C:\data\customers.csv"
 #>
 
 param(
     [Parameter(Mandatory = $false)]
-    [string]$CsvPath,
-
-    [Parameter(Mandatory = $true)]
-    [SecureString]$DefaultPassword
+    [string]$CsvPath
 )
+
+# ── Prompt for credentials ────────────────────────────────────────────
+$TenantName = Read-Host "Enter your Entra ID tenant name (e.g. contoso or contoso.onmicrosoft.com)"
+$DefaultPassword = Read-Host "Enter the default password for all users" -AsSecureString
+
+# Normalize tenant domain
+if ($TenantName -notlike "*.onmicrosoft.com") {
+    $TenantDomain = "$TenantName.onmicrosoft.com"
+}
+else {
+    $TenantDomain = $TenantName
+}
 
 # Auto-detect latest customers_*.csv if no path specified
 if (-not $CsvPath) {
     $csvFiles = Get-ChildItem -Path $PSScriptRoot -Filter "customers_*.csv" | Sort-Object Name
     if ($csvFiles) {
         $CsvPath = $csvFiles[-1].FullName
-    } else {
+    }
+    else {
         $CsvPath = Join-Path $PSScriptRoot "customers.csv"
     }
 }
@@ -61,6 +73,7 @@ Write-Host " Entra ID Customer User Provisioning Script" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "CSV file: $CsvPath"
+Write-Host "Tenant domain: $TenantDomain"
 Write-Host "Users to create: $($customers.Count)"
 Write-Host ""
 
@@ -88,7 +101,8 @@ $skipped = 0
 $failed = 0
 
 foreach ($customer in $customers) {
-    $upn = $customer.email
+    # Replace domain in CSV email with the specified tenant domain
+    $upn = ($customer.email -split '@')[0] + '@' + $TenantDomain
     $displayName = "$($customer.first_name) $($customer.last_name)"
 
     Write-Host "Processing: $displayName ($upn)..." -NoNewline
@@ -104,18 +118,26 @@ foreach ($customer in $customers) {
     # Create the user
     $mailNickname = $upn.Split('@')[0]
 
-    $errorOutput = az ad user create `
-        --display-name $displayName `
-        --user-principal-name $upn `
-        --password $PlainPassword `
-        --force-change-password-next-sign-in true `
-        --mail-nickname $mailNickname `
-        --output none 2>&1
+    # Wrap values that may contain cmd.exe metacharacters (e.g. '&' in the
+    # password) in double quotes. az is a batch file (az.cmd) on Windows and
+    # PowerShell 5.1 only auto-quotes native-command arguments containing
+    # spaces, so an unquoted '&' would split the command line inside az.cmd.
+    $azArgs = @(
+        'ad', 'user', 'create',
+        '--display-name', $displayName,
+        '--user-principal-name', $upn,
+        '--password', "`"$PlainPassword`"",
+        '--force-change-password-next-sign-in', 'true',
+        '--mail-nickname', $mailNickname,
+        '--output', 'none'
+    )
+    $errorOutput = & az @azArgs 2>&1
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host " CREATED" -ForegroundColor Green
         $created++
-    } else {
+    }
+    else {
         Write-Host " FAILED" -ForegroundColor Red
         Write-Host "    Error: $errorOutput" -ForegroundColor DarkRed
         $failed++
